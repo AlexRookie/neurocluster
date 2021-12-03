@@ -1,1 +1,3 @@
-# neurocluster
+# NeuroCluster
+
+Synthetic autoclustering planner
