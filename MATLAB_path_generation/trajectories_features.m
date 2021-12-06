@@ -36,7 +36,7 @@ end
 %shift_samples = samples - samples(:,:,1);
 
 % Normalise samples
-norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
+%norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
 
 % Denormalise samples
 % denorm_samples = norm_samples.*(max(samples,[],3)-min(samples,[],3)) + min(samples,[],3);
@@ -46,7 +46,7 @@ norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3)
 
 epochs = 300;
 batch  = 128;
-learn_rate = 0.005;
+learn_rate = 0.0001;
 
 % Initialize network and load Keras model
 pynet = pymodule.Network(epochs, batch, learn_rate);
@@ -59,7 +59,7 @@ pynet.define_model(num_points);
 % autoencoder = models{3};
 
 % Load dataset
-data = pynet.prepare_data(norm_samples, 80);
+data = pynet.prepare_data(samples, 80);
 
 X_train = double(data{1});
 X_valid = double(data{2});
@@ -75,6 +75,9 @@ fit = trained{4};
 fit_rmse = cellfun(@double,(cell(struct(fit.history).rmse)));
 figure(2);
 plot(fit_rmse);
+
+%% 
+% Test
 
 % Prediction autoencoder
 pred = pynet.predict(autoencoder, X_valid);
@@ -129,3 +132,21 @@ plot(rmse_y);
 xlabel('samples');
 legend({'x','y'});
 title('Rmse');
+
+% Prediction encoder
+pred_single = pynet.predict(autoencoder, -X_valid(1,:,:));
+
+A = double(pred_single);
+
+figure(6);
+hold on, grid on, box on, axis equal;
+xlabel('x');
+xlabel('y');
+title('Pred');
+plot(squeeze(-X_valid(1,1,:)), squeeze(-X_valid(1,2,:)), 'b.-');
+plot(squeeze(A(1,1,:)), squeeze(A(1,2,:)), 'm.-');
+
+% Latent space
+latent = pynet.predict(encoder, X_valid(1,:,:));
+
+latent
