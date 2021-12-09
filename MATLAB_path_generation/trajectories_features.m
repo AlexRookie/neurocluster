@@ -3,7 +3,7 @@ clear classes;
 clc;
 
 % Folder tree
-addpath(genpath('./path_clustering/'));
+addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./Clothoids/'));
 
 % Import python module
