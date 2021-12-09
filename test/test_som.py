@@ -42,6 +42,8 @@ model = tf.keras.models.Model(inputs=inputs, outputs=som_layer)
 
 print(model.summary())
 
+#=======================================================================================#
+
 def som_loss(weights, distances):
     """
     Calculate SOM reconstruction loss
@@ -54,8 +56,6 @@ def som_loss(weights, distances):
     return tf.reduce_mean(tf.reduce_sum(weights*distances, axis=1))
 
 model.compile(optimizer='adam', loss=som_loss)
-
-#=======================================================================================#
 
 def kmeans_loss(y_pred, distances):
     """
@@ -175,43 +175,49 @@ def som_fit(x_train, y_train=None, x_val=None, y_val=None, epochs=100, batch_siz
             Lsom = loss
             Lkm  = kmeans_loss(y_pred, d)
             Ltop = loss - kmeans_loss(y_pred, d)
-            quantization_err = quantization_error(d)
-            topographic_err  = topographic_error(d, map_size)
+            #quantization_err = quantization_error(d)
+            #topographic_err  = topographic_error(d, map_size)
 
             print('iteration {} - T={}'.format(ite, T))
             print('[Train] - Lsom={:f} (Lkm={:f}/Ltop={:f})'.format(Lsom, Lkm, Ltop))
-            print('[Train] - Quantization err={:f} / Topographic err={:f}'.format(quantization_err, topographic_err))
+            #print('[Train] - Quantization err={:f} / Topographic err={:f}'.format(quantization_err, topographic_err))
 
     return model
 
 # Train model
 model = som_fit(x_train, epochs=epochs, batch_size=batch_size)
 
+# Save the final model
+model.save_weights('som_model.h5')
+
 #=======================================================================================#
+
+# Load weights
+model.load_weights('som_model.h5')
+
+# Predict
+index = 5000
+d = model.predict(np.expand_dims(x_val[index], axis=0), verbose=0)
+d = np.argmin(d)
 
 # Plot
 som_weights = model.get_layer(name='SOM').get_weights()[0]
 img_size = int(np.sqrt(x_train.shape[1]))
-fig, ax = plt.subplots(map_size[0], map_size[1], figsize=(10, 10))
+
+fig1, axes = plt.subplots(nrows=map_size[0], ncols=map_size[1], figsize=(10, 10))
 for k in range(map_size[0] * map_size[1]):
-   ax[k // map_size[1]][k % map_size[1]].imshow(som_weights[k].reshape(img_size, img_size), cmap='gray')
-   ax[k // map_size[1]][k % map_size[1]].axis('off')
+   axes[k // map_size[1]][k % map_size[1]].imshow(som_weights[k].reshape(img_size, img_size), cmap='gray')
+   axes[k // map_size[1]][k % map_size[1]].axis('off')
 plt.subplots_adjust(hspace=0.05, wspace=0.05)
 
-plt.draw() # non-blocking plot
-plt.pause(0.1)
-
-#  # Save the final model
-# logfile.close()
-# print('saving model to:', save_dir + '/kerasom_model_final.h5')
-# self.model.save_weights(save_dir + '/kerasom_model_final.h5')
-
-# Predict
-d = model.predict(np.expand_dims(x_val[0], axis=0), verbose=0)
-d = d.argmin(axis=1)
-
-plt.figure(10)
-plt.imshow(255.*x_val[0].reshape(img_size, img_size))
+axes[d // map_size[1]][d % map_size[1]].axis('on')
+axes[d // map_size[1]][d % map_size[1]].patch.set_edgecolor('red')
+axes[d // map_size[1]][d % map_size[1]].patch.set_linewidth('10')
 
 plt.draw() # non-blocking plot
 plt.pause(0.1)
+
+fig2 = plt.figure(2)
+plt.imshow(x_val[index].reshape(img_size, img_size))
+
+plt.show() # blocking plot
