@@ -1,5 +1,5 @@
 # Simple autoencoder test
-# Ref: https://blog.keras.io/building-autoencoders-in-keras.html
+# Ref: https://blog.keras.io/building-autoencoders-in-keras.html
 
 import tensorflow as tf
 from tensorflow import keras
