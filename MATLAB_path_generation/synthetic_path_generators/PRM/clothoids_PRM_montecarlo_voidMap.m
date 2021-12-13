@@ -1,38 +1,31 @@
-
-res = 1;
-image = imread('voidMap.png');
-grayimage = rgb2gray(image);
-bwimage = grayimage < 0.5;
-im = imresize(bwimage, 1/40);
-map = binaryOccupancyMap(im,res);
-
-% figure
-if options_plot
-    show(map);
-    hold on;
-end
-
-map1 = copy(map);
-inflate(map1,0.2/res);
+function samples = clothoids_PRM_montecarlo_voidMap(num_traj, num_points, map, res, options)
 
 LVEC = 0.5/res;
 
 time = clock();
 rng(time(6));
 
-if options_save
+samples.x      = NaN(num_traj, num_points);
+samples.y      = NaN(num_traj, num_points);
+samples.theta  = NaN(num_traj, num_points);
+samples.kappa  = NaN(num_traj, num_points);
+samples.dx     = NaN(num_traj, num_points);
+samples.dy     = NaN(num_traj, num_points);
+samples.dtheta = NaN(num_traj, num_points);
+samples.dkappa = NaN(num_traj, num_points);
+
+% Save data
+if options.save
     FileName = "Prova.txt";
     fid = fopen(FileName, 'w');
 end
 
-samples = [];
-
-for i=1:num_traj
+for i = 1:num_traj
     if mod(i,50) == 0
         disp(i);
     end
     
-    prm = mobileRobotPRM(map1,100);
+    prm = mobileRobotPRM(map, 100);
 
     P1 = [4 + rand()*2, 4 + rand()*2]./res;
     a1 = pi/4 + rand()/8;
@@ -78,22 +71,37 @@ for i=1:num_traj
         end
 
         iter = C.build_G1(x1, y1, angle0, x2, y2, angle );
-        if options_plot
+        if options.plot
             C.plot( 1000, '-', 'LineWidth', 2 );
         end
         
-        [a, b] = C.points(num_points);
-        sample = [a; b];
+        % Get data
+        L = C.length();
+        [x, y, theta, kappa] = C.evaluate(linspace(0,L,num_points));
+        %[a, b] = C.points(num_points); 
+        [dx, dy] = C.eval_D(linspace(0,L,num_points));
+        dtheta = C.theta_D(linspace(0,L,num_points));
+        dkappa = C.kappa_D(linspace(0,L,num_points));
              
-        if options_save
-            fmt = [repmat('%10.5f ', 1, length(sample)-1), '%10.5f\n'];
-            fprintf(fid, fmt, sample);
-        end
+        %sample = [a; b];
+        %samples = cat(3, samples, sample);
         
-        samples = cat(3, samples, sample);
+        samples.x     (i, :) = x     ;
+        samples.y     (i, :) = y     ;
+        samples.theta (i, :) = theta ;
+        samples.kappa (i, :) = kappa ;
+        samples.dx    (i, :) = dx    ;
+        samples.dy    (i, :) = dy    ;
+        samples.dtheta(i, :) = dtheta;
+        samples.dkappa(i, :) = dkappa;
+        
+        if options.save
+            %fmt = [repmat('%10.5f ', 1, length(samples)-1), '%10.5f\n'];
+            %fprintf(fid, fmt, samples);
+        end
     end
     
-    if options_plot
+    if options.plot
         plot(P1(1), P1(2), 'ro', ...
             'MarkerEdgeColor','k',...
             'MarkerFaceColor','g',...
@@ -109,8 +117,10 @@ for i=1:num_traj
     end
 end
 
-samples = permute(samples,[3,1,2]);
+%samples = permute(samples,[3,1,2]);
 
-if options_save
+if options.save
     fclose(fid);
+end
+
 end
