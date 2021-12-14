@@ -10,7 +10,7 @@ addpath(genpath('./Clothoids/'));
 num_traj   = 10;
 num_points = 50;
 generator = 'clothoids_PRM_montecarlo_map';
-map = 'cross'; % 'voidMap', 'cross'
+map = 'void'; % 'void', 'cross'
 
 options.save = false;
 options.plot = true;

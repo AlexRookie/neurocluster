@@ -1,4 +1,8 @@
-function samples = clothoids_PRM_montecarlo_map(num_traj, num_points, pos, map, res, options)
+function samples = clothoids_PRM_montecarlo_map(num_traj, num_points, pos, ob_map, options)
+
+obstacles = ob_map.obstacles;
+res = ob_map.res;
+map = ob_map.map_res;
 
 LVEC = 0.5/res;
 
@@ -41,14 +45,24 @@ for i = 1:num_traj
     path = path(1:ceil(length(path)/6):end,:);
     d = pdist([path(end,1:2);P2],'euclidean');
     if d < 1
-        path(end,:)=P2;
+        path(end,:) = P2;
     else
-        path(end+1,:)=P2;
+        path(end+1,:) = P2;
     end
     
     npts = 1000;
     CL = ClothoidSplineG2();
-    SL = CL.buildP1(path(:,1), path(:,2),a1,a2);
+    SL = CL.buildP1(path(:,1), path(:,2), a1, a2);
+    
+    % Check sline-obstacles interections
+    for k = 1:size(obstacles,1)
+        for j = 2:size(obstacles{k,1},2)
+            L = LineSegment(obstacles{k,1}(:,j-1), obstacles{k,1}(:,j));
+            if SL.collision(L)
+                error('Spline has a collision!');
+            end
+        end
+    end
     
     if options.plot
         SL.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
