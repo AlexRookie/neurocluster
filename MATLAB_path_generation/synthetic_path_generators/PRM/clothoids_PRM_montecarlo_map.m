@@ -30,22 +30,22 @@ for i = 1:num_traj
     end
     
     prm = mobileRobotPRM(map, 100);
+
+    occ = getOccupancy(map);
+    mask = occ*0;
+    x = max(ceil(pos.x1)-1,1);
+    y = max(ceil(pos.y1)-1,1);
+    x = [x, min(ceil(pos.x1)+1,20)];
+    y = [y, min(ceil(pos.y1)+1,20)];
+    mask(y(1):y(2),x(1):x(2)) = ones(3,3);
+    coll = mask & occ;
     
-    get_pos = true;
-    k = 0;
-    while get_pos
-        k = k+1;
-        P1 = [pos.x1 + rand()*2, pos.y1 + rand()*9]./res;
-        a1 = rand()*pi/2;
-        P2 = [pos.x2 + rand()*5, pos.y2 + rand()*7]./res;
-        a2 = -rand()*pi/2;
-        if ~getOccupancy(map, P1) && ~getOccupancy(map, P2)
-            get_pos = false;
-        end
-        if k > 5000
-            error('Reached iteration limit for getting positions.');
-        end
-    end
+
+    
+    P1 = [pos.x1 + rand()*2, pos.y1 + rand()*9]./res;
+    a1 = rand()*pi/2;
+    P2 = [pos.x2 + rand()*5, pos.y2 + rand()*7]./res;
+    a2 = -rand()*pi/2;
     
     path = findpath(prm,P1,P2);
         
