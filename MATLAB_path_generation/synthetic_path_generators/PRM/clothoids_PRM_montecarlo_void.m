@@ -1,4 +1,4 @@
-function samples = clothoids_PRM_montecarlo_voidMap(num_traj, num_points, map, res, options)
+function samples = clothoids_PRM_montecarlo_void(num_traj, num_points, pos, map, res, options)
 
 LVEC = 0.5/res;
 
@@ -27,9 +27,9 @@ for i = 1:num_traj
     
     prm = mobileRobotPRM(map, 100);
 
-    P1 = [4 + rand()*2, 4 + rand()*2]./res;
+    P1 = [pos.x1 + rand()*2, pos.y1 + rand()*2]./res;
     a1 = pi/4 + rand()/8;
-    P2 = [14 + rand()*2, 14 + rand()*2]./res;
+    P2 = [pos.x2 + rand()*2, pos.y2 + rand()*2]./res;
     a2 = pi/4 + rand()/8;
     
     path = findpath(prm,P1,P2);

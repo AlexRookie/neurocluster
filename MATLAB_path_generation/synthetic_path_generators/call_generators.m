@@ -2,7 +2,7 @@ function samples = call_generators(generator, map_name, num_traj, num_points, op
 
 res = 1;
 
-if contains(generator, '_map') && ~contains(generator, '_voidMap')
+if contains(generator, '_map') && ~contains(generator, '_void')
     if isempty(map_name)
         load exampleMaps.mat;
         map = binaryOccupancyMap(simpleMap,res);
@@ -13,7 +13,7 @@ if contains(generator, '_map') && ~contains(generator, '_voidMap')
         im = imresize(bwimage, 1/40);
         map = binaryOccupancyMap(im,res);
     end
-elseif contains(generator, '_voidMap') && ~contains(generator, '_map')
+elseif contains(generator, '_void') && ~contains(generator, '_map')
     image = imread('voidMap.png');
     grayimage = rgb2gray(image);
     bwimage = grayimage < 0.5;
@@ -22,16 +22,23 @@ elseif contains(generator, '_voidMap') && ~contains(generator, '_map')
 end
 
 % Plot figure
-if options.plot
-    figure(100);
-    show(map);
-    hold on;
-end
+figure(100);
+show(map);
+hold on;
 
-map1 = copy(map);
-inflate(map1,0.2/res);
+% Get positions
+[pos.x1, pos.y1] = ginput(1);
+plot(pos.x1, pos.y1, 'xk', 'LineStyle', 'none');
+drawnow;
+
+[pos.x2, pos.y2] = ginput(1);
+plot(pos.x2, pos.y2, 'xr', 'LineStyle', 'none');
+drawnow;
+
+map_res = copy(map);
+inflate(map_res,0.2/res);
 
 % Call generator
-samples = feval(generator, num_traj, num_points, map1, res, options);
+samples = feval(generator, num_traj, num_points, pos, map_res, res, options);
 
 end
