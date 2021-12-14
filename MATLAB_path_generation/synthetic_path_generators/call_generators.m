@@ -36,7 +36,7 @@ plot(pos.x2, pos.y2, 'xr', 'LineStyle', 'none');
 drawnow;
 
 map_res = copy(map);
-inflate(map_res,0.2/res);
+inflate(map_res, 0.2/res);
 
 % Call generator
 samples = feval(generator, num_traj, num_points, pos, map_res, res, options);
