@@ -28,10 +28,16 @@ hold on;
 
 % Get positions
 [pos.x1, pos.y1] = ginput(1);
+while  checkOccupancy(map,[pos.x1, pos.y1])
+    [pos.x1, pos.y1] = ginput(1);
+end
 plot(pos.x1, pos.y1, 'xk', 'LineStyle', 'none');
 drawnow;
 
 [pos.x2, pos.y2] = ginput(1);
+while  checkOccupancy(map,[pos.x2, pos.y2])
+    [pos.x2, pos.y2] = ginput(1);
+end
 plot(pos.x2, pos.y2, 'xr', 'LineStyle', 'none');
 drawnow;
 
