@@ -20,31 +20,22 @@ if options.save
     fid = fopen(FileName, 'w');
 end
 
+area = montecarlo_area(map,pos);
+
 for i = 1:num_traj
     if mod(i,50) == 0
         disp(i);
     end
     
     prm = mobileRobotPRM(map, 100);
-
-    occ = getOccupancy(map);
-    mask = occ*0;
-    x = max(ceil(pos.x1)-1,1);
-    y = max(ceil(pos.y1)-1,1);
-    x = [x, min(ceil(pos.x1)+1,20)];
-    y = [y, min(ceil(pos.y1)+1,20)];
-    mask(y(1):y(2),x(1):x(2)) = ones(3,3);
-    coll = mask & occ;
-    
-
-    
-    P1 = [pos.x1 + rand()*2, pos.y1 + rand()*9]./res;
+ 
+    P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)]./res;
     a1 = rand()*pi/2;
-    P2 = [pos.x2 + rand()*5, pos.y2 + rand()*7]./res;
+    P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)]./res;
     a2 = -rand()*pi/2;
     
     path = findpath(prm,P1,P2);
-        
+%         
     path(2,:)=[];
     path(end-1,:)=[];
     path = path(1:ceil(length(path)/6):end,:);
