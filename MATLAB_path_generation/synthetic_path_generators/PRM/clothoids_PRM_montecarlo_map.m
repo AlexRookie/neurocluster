@@ -75,7 +75,6 @@ for i = 1:num_traj
                     % Determine which of the spline segments collided
                     i_coll = SL.closestSegment(mean(X),mean(Y)) + 1;
                     % Add a contraint point in the colliding segment
-                    plot(mean(path(i_coll:i_coll+1,1)),mean(path(i_coll:i_coll+1,2)),'x');
                     path = [path(1:i_coll,:); mean(path(i_coll:i_coll+1,1)),mean(path(i_coll:i_coll+1,2)); path(i_coll+1:end,:)];
                     % error('Spline has a collision!');
                 end
