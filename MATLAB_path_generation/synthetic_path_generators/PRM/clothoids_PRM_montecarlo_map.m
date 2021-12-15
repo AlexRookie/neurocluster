@@ -24,6 +24,7 @@ if options.save
     fid = fopen(FileName, 'w');
 end
 
+% Find a valid area to generate starting/ending points
 area = montecarlo_area(map,pos);
 
 for i = 1:num_traj
@@ -33,16 +34,19 @@ for i = 1:num_traj
     
     prm = mobileRobotPRM(map, 100);
  
+    % Generate starting/ending points and angles randomly
     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)]./res;
     a1 = 0 + rand()*pi/4-pi/8;
     P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)]./res;
     a2 = pi/2 + rand()*pi/4-pi/8;
     
+    % Plan a path between P1 and P2 using PRM
     path = findpath(prm,P1,P2);
-%         
+
     path(2,:)=[];
     path(end-1,:)=[];
     path = path(1:ceil(length(path)/6):end,:);
+
     d = pdist([path(end,1:2);P2],'euclidean');
     if d < 1
         path(end,:) = P2;
@@ -50,16 +54,31 @@ for i = 1:num_traj
         path(end+1,:) = P2;
     end
     
-    npts = 1000;
-    CL = ClothoidSplineG2();
-    SL = CL.buildP1(path(:,1), path(:,2), a1, a2);
-    
-    % Check sline-obstacles interections
-    for k = 1:size(obstacles,1)
-        for j = 2:size(obstacles{k,1},2)
-            L = LineSegment(obstacles{k,1}(:,j-1), obstacles{k,1}(:,j));
-            if SL.collision(L)
-                error('Spline has a collision!');
+    % Build the spline using the points planned with PRM until there is no
+    % collisions
+    collision = true;
+    while collision
+
+        npts = 1000;
+        CL = ClothoidSplineG2();
+        SL = CL.buildP1(path(:,1), path(:,2), a1, a2);
+        collision = false;
+        
+        % Check spline-obstacles interections
+        for k = 1:size(obstacles,1)
+            for j = 2:size(obstacles{k,1},2)
+                L = LineSegment(obstacles{k,1}(:,j-1), obstacles{k,1}(:,j));
+                if SL.collision(L)
+                    collision = true;
+                    % Find the coordinates of the collision
+                    [X,Y]=SL.eval(SL.intersect(L));
+                    % Determine which of the spline segments collided
+                    i_coll = SL.closestSegment(mean(X),mean(Y)) + 1;
+                    % Add a contraint point in the colliding segment
+                    plot(mean(path(i_coll:i_coll+1,1)),mean(path(i_coll:i_coll+1,2)),'x');
+                    path = [path(1:i_coll,:); mean(path(i_coll:i_coll+1,1)),mean(path(i_coll:i_coll+1,2)); path(i_coll+1:end,:)];
+                    % error('Spline has a collision!');
+                end
             end
         end
     end

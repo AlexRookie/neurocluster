@@ -1,8 +1,11 @@
+% function to define valid area where run montecarlo generator of points
 function area = montecarlo_area(map, pos)
     
+    % Find a valid area for the starting point (1) and ending point (2)
     [area.x1, area.y1] = valid_area(map, pos.x1, pos.y1);
     [area.x2, area.y2] = valid_area(map, pos.x2, pos.y2);
 
+    % Add a margin to avoid the inflated map walls
     area.x1(1) = area.x1(1) + 0.1;
     area.y1(1) = area.y1(1) + 0.1;
     area.x2(1) = area.x2(1) + 0.1;
@@ -14,16 +17,19 @@ function area = montecarlo_area(map, pos)
 
 end
 
+% Search for valid area for a specific point in the map
 function [x, y] = valid_area(map, a, b)
 
     occ = getOccupancy(map);
     mask = occ*0;
 
+    % Discretize the point coordinates in the grid world
     x = max(floor(a)-1,0);
     y = max(floor(b)-1,0);
     x = [x, min(ceil(a),map.DataSize(1)-1)];
     y = [y, min(ceil(b),map.DataSize(2)-1)];
     
+    % Force the area to be squared
     while x(2) - x(1) ~= y(2) - y(1)
         if x(2) - x(1) < y(2) - y(1)
             if x(1) > map.DataSize(1)/2
@@ -40,14 +46,18 @@ function [x, y] = valid_area(map, a, b)
         end
     end
 
+    % dimension of area considered
     n = x(2) - x(1) + 1;
 
+    % Grid coordinates of the considered area
     xx = (x(1):x(2))+1;
     yy = (y(1):y(2))+1;
 
+    % Eliminate from area the invalid regions (obstacles/walls)
     mask(yy,xx) = ones(n,n);
     [x,y,coll] = get_boundaries(mask, occ);
     
+    % Iterate the process to find valid area
     flag = true;
     while flag
         [flag, mask, xx, yy] = checker(mask, coll, xx, yy);
@@ -56,6 +66,7 @@ function [x, y] = valid_area(map, a, b)
 
 end
 
+% Eliminate from area the invalid regions (obstacles/walls)
 function [x,y,coll] = get_boundaries(mask, occ)
 
     coll = max(xor(mask, occ) - occ,0);
@@ -73,9 +84,13 @@ function [x,y,coll] = get_boundaries(mask, occ)
 
 end
 
+% Check if the area considered is still a full square, if not fix it
 function [flag, mask, xx, yy] = checker(mask, coll, xx, yy)
+
     check = coll(yy,xx);
     flag = false;
+
+    %check if there is any intersection between area and map obstacles
     if sum(check(:) == 0) > 0
         if check(1,1) == 0
             if sum(check(1,:)) < 2 && sum(check(:,1)) < 2
