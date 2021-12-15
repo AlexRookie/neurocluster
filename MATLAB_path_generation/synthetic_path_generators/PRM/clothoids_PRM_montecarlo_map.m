@@ -34,9 +34,9 @@ for i = 1:num_traj
     prm = mobileRobotPRM(map, 100);
  
     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)]./res;
-    a1 = rand()*pi/2;
+    a1 = 0 + rand()*pi/4-pi/8;
     P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)]./res;
-    a2 = -rand()*pi/2;
+    a2 = pi/2 + rand()*pi/4-pi/8;
     
     path = findpath(prm,P1,P2);
 %         

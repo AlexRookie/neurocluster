@@ -74,7 +74,7 @@ function [x,y,coll] = get_boundaries(mask, occ)
 end
 
 function [flag, mask, xx, yy] = checker(mask, coll, xx, yy)
-    check = coll(yy,xx)
+    check = coll(yy,xx);
     flag = false;
     if sum(check(:) == 0) > 0
         if check(1,1) == 0
