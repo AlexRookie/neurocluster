@@ -31,9 +31,9 @@ function obstacles = map2poly(map,res)
 
     % Save obstacle polynomials in array
     for i=1:length(shp)
-        if shp(i).Z == 0.5
+        if shp(i).Z == 0.1
             % Plot the inflated map polygons
-            plot(shp(i).X,shp(i).Y,'r');
+            % plot(shp(i).X,shp(i).Y,'r');
             obstacles(end+1,1) = {[shp(i).X;shp(i).Y]};
         end
     end
