@@ -36,9 +36,9 @@ for i = 1:num_traj
  
     % Generate starting/ending points and angles randomly
     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)]./res;
-    a1 = rand()*2*pi; % 0 + rand()*pi/4-pi/8;
+    a1 = pos.a1 + rand()*pi/4-pi/8;
     P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)]./res;
-    a2 = rand()*2*pi; % pi/2 + rand()*pi/4-pi/8;
+    a2 = pos.a2 + rand()*pi/4-pi/8;
     
     % Plan a path between P1 and P2 using PRM
     path = findpath(prm,P1,P2);

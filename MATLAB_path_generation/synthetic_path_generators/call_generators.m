@@ -3,6 +3,8 @@ function samples = call_generators(generator, map_name, num_traj, num_points, op
 res = 1;
 obstacles = cell(0);
 
+LVEC = 0.5/res;
+
 % Load map
 if not(isempty(map_name))
     % Open file
@@ -94,20 +96,29 @@ figure(100);
 show(map);
 hold on;
 
-% Get positions
+% Get position 1
 [pos.x1, pos.y1] = ginput(1);
 while  checkOccupancy(map,[pos.x1, pos.y1])
     [pos.x1, pos.y1] = ginput(1);
 end
 plot(pos.x1, pos.y1, 'xk', 'LineStyle', 'none');
 drawnow;
+% Get angle 1
+[x, y] = ginput(1);
+pos.a1 = atan2((y - pos.y1), (x - pos.x1));
+quiver( pos.x1, pos.y1, LVEC*cos(pos.a1), LVEC*sin(pos.a1), 'Color', 'r' );
 
+% Get position 2
 [pos.x2, pos.y2] = ginput(1);
 while  checkOccupancy(map,[pos.x2, pos.y2])
     [pos.x2, pos.y2] = ginput(1);
 end
 plot(pos.x2, pos.y2, 'xr', 'LineStyle', 'none');
 drawnow;
+% Get angle 2
+[x, y] = ginput(1);
+pos.a2 = atan2((y - pos.y2), (x - pos.x2));
+quiver( pos.x2, pos.y2, LVEC*cos(pos.a2), LVEC*sin(pos.a2), 'Color', 'r' );
 
 % Inflate occupancy map
 map_res = copy(map);

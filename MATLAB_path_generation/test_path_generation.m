@@ -7,7 +7,7 @@ addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./Clothoids/'));
 
 % Parameters
-num_traj   = 10;
+num_traj   = 20;
 num_points = 50;
 generator = 'clothoids_PRM_montecarlo_map';
 map = 'cross'; % 'void', 'cross'
