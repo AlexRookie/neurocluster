@@ -36,9 +36,9 @@ for i = 1:num_traj
  
     % Generate starting/ending points and angles randomly
     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)]./res;
-    a1 = pos.a1 + rand()*pi/4-pi/8;
+    a1 = pos.a1 + rand()*pi/8-pi/16;
     P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)]./res;
-    a2 = pos.a2 + rand()*pi/4-pi/8;
+    a2 = pos.a2 + rand()*pi/8-pi/16;
     
     % Plan a path between P1 and P2 using PRM
     path = findpath(prm,P1,P2);
@@ -46,6 +46,9 @@ for i = 1:num_traj
     path(2,:)=[];
     path(end-1,:)=[];
     path = path(1:ceil(length(path)/6):end,:);
+
+    % Plot the PRM path
+    % plot(path(:,1),path(:,2),'LineWidth',2)
 
     d = pdist([path(end,1:2);P2],'euclidean');
     if d < 1
@@ -64,7 +67,7 @@ for i = 1:num_traj
         CL.verbose(false);
         SL = CL.buildP1(path(:,1), path(:,2), a1, a2);
         collision = false;
-        
+
         % Check spline-obstacles interections
         for k = 1:size(obstacles,1)
             for j = 2:size(obstacles{k,1},2)
@@ -78,7 +81,11 @@ for i = 1:num_traj
                     % Add a contraint point in the colliding segment
                     path = [path(1:i_coll,:); mean(path(i_coll:i_coll+1,1)),mean(path(i_coll:i_coll+1,2)); path(i_coll+1:end,:)];
                     % error('Spline has a collision!');
+                    break;
                 end
+            end
+            if collision
+                break;
             end
         end
     end

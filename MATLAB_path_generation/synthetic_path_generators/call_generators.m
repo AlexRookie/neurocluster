@@ -124,6 +124,9 @@ quiver( pos.x2, pos.y2, LVEC*cos(pos.a2), LVEC*sin(pos.a2), 'Color', 'r' );
 map_res = copy(map);
 inflate(map_res, 0.2/res);
 
+% Get polygons of inflated map and set as obstacles
+obstacles = map2poly(map_res);
+
 ob_map.obstacles = obstacles;
 ob_map.res = res;
 ob_map.map_res = map_res;
