@@ -1,9 +1,9 @@
 % function to define valid area where run montecarlo generator of points
-function area = montecarlo_area(map, pos)
+function area = montecarlo_area(map, res, pos)
     
     % Find a valid area for the starting point (1) and ending point (2)
-    [area.x1, area.y1] = valid_area(map, pos.x1, pos.y1);
-    [area.x2, area.y2] = valid_area(map, pos.x2, pos.y2);
+    [area.x1, area.y1] = valid_area(map, res, pos.x1, pos.y1);
+    [area.x2, area.y2] = valid_area(map, res, pos.x2, pos.y2);
 
     % Add a margin to avoid the inflated map walls
     area.x1(1) = area.x1(1) + 0.1;
@@ -18,7 +18,7 @@ function area = montecarlo_area(map, pos)
 end
 
 % Search for valid area for a specific point in the map
-function [x, y] = valid_area(map, a, b)
+function [x, y] = valid_area(map, res, a, b)
 
     occ = getOccupancy(map);
     mask = occ*0;
@@ -47,27 +47,30 @@ function [x, y] = valid_area(map, a, b)
     end
 
     % dimension of area considered
-    n = x(2) - x(1) + 1;
+    n = (x(2) - x(1) + 1)*res;
 
     % Grid coordinates of the considered area
-    xx = (x(1):x(2))+1;
-    yy = (y(1):y(2))+1;
+    xx = (x(1)*res:(x(2)+1)*res-1)+1;
+    yy = (y(1)*res:(y(2)+1)*res-1)+1;
 
     % Eliminate from area the invalid regions (obstacles/walls)
     mask(yy,xx) = ones(n,n);
-    [x,y,coll] = get_boundaries(mask, occ);
+    [x,y,coll] = get_boundaries(mask, occ, res);
     
     % Iterate the process to find valid area
     flag = true;
     while flag
-        [flag, mask, xx, yy] = checker(mask, coll, xx, yy);
+        [flag, mask, xx, yy] = checker(mask, coll, res, xx, yy);
         [x,y,coll] = get_boundaries(mask, occ);
     end
+
+    x = x/res;
+    y = y/res;
 
 end
 
 % Eliminate from area the invalid regions (obstacles/walls)
-function [x,y,coll] = get_boundaries(mask, occ)
+function [x,y,coll] = get_boundaries(mask, occ, res)
 
     coll = max(xor(mask, occ) - occ,0);
 
@@ -85,7 +88,7 @@ function [x,y,coll] = get_boundaries(mask, occ)
 end
 
 % Check if the area considered is still a full square, if not fix it
-function [flag, mask, xx, yy] = checker(mask, coll, xx, yy)
+function [flag, mask, xx, yy] = checker(mask, coll, res, xx, yy)
 
     check = coll(yy,xx);
     flag = false;

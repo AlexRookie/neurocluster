@@ -1,9 +1,9 @@
 function samples = call_generators(generator, map_name, num_traj, num_points, options)
 
-res = 1;
+res = 10;
 obstacles = cell(0);
 
-LVEC = 0.5/res;
+LVEC = 0.5;
 
 % Load map
 if not(isempty(map_name))
@@ -71,12 +71,12 @@ if not(isempty(map_name))
     end
     
     % Create occupancy map
-    map = false(x_lim(2)-x_lim(1), x_lim(2)-x_lim(1));
+    map = false((x_lim(2)-x_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
     for i = 1:size(obstacles,1)
-        map = map | poly2mask(obstacles{i,1}(1,:), obstacles{i,1}(2,:), x_lim(2)-x_lim(1), x_lim(2)-x_lim(1));
+        map = map | poly2mask(obstacles{i,1}(1,:).*res, obstacles{i,1}(2,:).*res, (x_lim(2)-x_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
     end
     map = flip(map);
-    map = binaryOccupancyMap(map, res);
+    map = binaryOccupancyMap(map,res);
 end
 
 % Load example map
@@ -122,10 +122,10 @@ quiver( pos.x2, pos.y2, LVEC*cos(pos.a2), LVEC*sin(pos.a2), 'Color', 'r' );
 
 % Inflate occupancy map
 map_res = copy(map);
-inflate(map_res, 0.2/res);
+inflate(map_res, 0.5);
 
 % Get polygons of inflated map and set as obstacles
-obstacles = map2poly(map_res);
+obstacles = map2poly(map_res,res);
 
 ob_map.obstacles = obstacles;
 ob_map.res = res;

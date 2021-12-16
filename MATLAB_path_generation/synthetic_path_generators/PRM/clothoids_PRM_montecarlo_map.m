@@ -4,7 +4,7 @@ obstacles = ob_map.obstacles;
 res = ob_map.res;
 map = ob_map.map_res;
 
-LVEC = 0.5/res;
+LVEC = 0.5;
 
 time = clock();
 rng(time(6));
@@ -25,7 +25,7 @@ if options.save
 end
 
 % Find a valid area to generate starting/ending points
-area = montecarlo_area(map,pos);
+area = montecarlo_area(map, res, pos);
 
 for i = 1:num_traj
     if mod(i,50) == 0
@@ -35,9 +35,9 @@ for i = 1:num_traj
     prm = mobileRobotPRM(map, 100);
  
     % Generate starting/ending points and angles randomly
-    P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)]./res;
+    P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)];
     a1 = pos.a1 + rand()*pi/8-pi/16;
-    P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)]./res;
+    P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)];
     a2 = pos.a2 + rand()*pi/8-pi/16;
     
     % Plan a path between P1 and P2 using PRM
@@ -91,7 +91,7 @@ for i = 1:num_traj
     end
     
     if options.plot
-        SL.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
+        % SL.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
     end
 
     % Get data
