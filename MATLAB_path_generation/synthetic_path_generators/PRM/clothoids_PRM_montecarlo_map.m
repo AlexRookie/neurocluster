@@ -2,7 +2,7 @@ function samples = clothoids_PRM_montecarlo_map(num_traj, num_points, obj_pos, o
 
 obstacles = obj_map.obstacles;
 res = obj_map.res;
-map = obj_map.map_res;
+map_res = obj_map.map_res;
 
 LVEC = 0.5;
 
@@ -32,7 +32,7 @@ for i = 1:num_traj
         disp(i);
     end
     
-    prm = mobileRobotPRM(map, 100);
+    prm = mobileRobotPRM(map_res, 100);
  
     % Generate starting/ending points and angles randomly inside the valid
     % area
