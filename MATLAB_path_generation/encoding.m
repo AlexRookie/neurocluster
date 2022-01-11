@@ -5,6 +5,7 @@ clc;
 % Folder tree
 addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./Clothoids/'));
+addpath(genpath('./C2xyz_v2/'));
 
 % Parameters
 num_traj   = 10;

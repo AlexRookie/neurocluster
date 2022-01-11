@@ -1,8 +1,8 @@
-function samples = clothoids_PRM_montecarlo_map(num_traj, num_points, pos, ob_map, options)
+function samples = clothoids_PRM_montecarlo_map(num_traj, num_points, obj_pos, obj_map, options)
 
-obstacles = ob_map.obstacles;
-res = ob_map.res;
-map = ob_map.map_res;
+obstacles = obj_map.obstacles;
+res = obj_map.res;
+map = obj_map.map_res;
 
 LVEC = 0.5;
 
@@ -25,7 +25,7 @@ if options.save
 end
 
 % Find a valid area to generate starting/ending points
-area = montecarlo_area(obstacles, pos);
+area = montecarlo_area(obstacles, obj_pos);
 
 for i = 1:num_traj
     if mod(i,50) == 0
@@ -47,13 +47,13 @@ for i = 1:num_traj
         in = isinterior(area.c2,P2);
     end
     
-    a1 = pos.a1 + rand()*pi/8-pi/16;
-    a2 = pos.a2 + rand()*pi/8-pi/16;
+    a1 = obj_pos.a1 + rand()*pi/8-pi/16;
+    a2 = obj_pos.a2 + rand()*pi/8-pi/16;
 
 %     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)];
-%     a1 = pos.a1 + rand()*pi/8-pi/16;
+%     a1 = obj_pos.a1 + rand()*pi/8-pi/16;
 %     P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)];
-%     a2 = pos.a2 + rand()*pi/8-pi/16;
+%     a2 = obj_pos.a2 + rand()*pi/8-pi/16;
     
     % Plan a path between P1 and P2 using PRM
     path = findpath(prm,P1,P2);
