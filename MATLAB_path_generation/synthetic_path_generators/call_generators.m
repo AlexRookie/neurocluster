@@ -94,6 +94,8 @@ end
 % Plot figure
 figure(100);
 show(map);
+xlim(x_lim);
+ylim(y_lim);
 hold on;
 
 % Get position 1
