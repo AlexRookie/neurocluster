@@ -12,9 +12,9 @@ function obstacles = map2poly(map,res)
 
     % Rescale the polynomials to real dimensions of map
     for i=1:length(shp)
-        dim = map.DataSize(1);
+        dim = map.GridSize(1);
         shp(i).X = ((shp(i).X-1)./(dim-1).*dim)./res;
-        dim = map.DataSize(2);
+        dim = map.GridSize(2);
         shp(i).Y = ((shp(i).Y-1)./(dim-1).*dim)./res;
     end
     % Remove duplicate points in polynomial

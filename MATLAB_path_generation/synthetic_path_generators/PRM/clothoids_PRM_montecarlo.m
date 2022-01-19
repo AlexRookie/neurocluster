@@ -1,22 +1,32 @@
-function samples = clothoids_PRM_montecarlo_map(num_traj, num_points, pos, ob_map, options)
+function samples = clothoids_PRM_montecarlo(num_traj, num_points, obj_pos, obj_map, options)
 
-obstacles = ob_map.obstacles;
-res = ob_map.res;
-map = ob_map.map_res;
+obstacles = obj_map.obstacles;
+res = obj_map.res;
+map_res = obj_map.map_res;
+
+step = 0.05; % sampling step (cm)
 
 LVEC = 0.5;
 
 time = clock();
 rng(time(6));
 
-samples.x      = NaN(num_traj, num_points);
-samples.y      = NaN(num_traj, num_points);
-samples.theta  = NaN(num_traj, num_points);
-samples.kappa  = NaN(num_traj, num_points);
-samples.dx     = NaN(num_traj, num_points);
-samples.dy     = NaN(num_traj, num_points);
-samples.dtheta = NaN(num_traj, num_points);
-samples.dkappa = NaN(num_traj, num_points);
+samples.length   = cell(1,num_traj);
+samples.x        = cell(1,num_traj);
+samples.y        = cell(1,num_traj);
+samples.dx       = cell(1,num_traj);
+samples.dy       = cell(1,num_traj);
+samples.ddx      = cell(1,num_traj);
+samples.ddy      = cell(1,num_traj);
+samples.dddx     = cell(1,num_traj);
+samples.dddy     = cell(1,num_traj);
+samples.theta    = cell(1,num_traj);
+samples.dtheta   = cell(1,num_traj);
+samples.ddtheta  = cell(1,num_traj);
+samples.dddtheta = cell(1,num_traj);
+samples.kappa    = cell(1,num_traj);
+samples.dkappa   = cell(1,num_traj);
+samples.ddkappa  = cell(1,num_traj);
 
 % Save data
 if options.save
@@ -25,14 +35,14 @@ if options.save
 end
 
 % Find a valid area to generate starting/ending points
-area = montecarlo_area(obstacles, pos);
+area = montecarlo_area(obstacles, obj_pos);
 
 for i = 1:num_traj
     if mod(i,50) == 0
         disp(i);
     end
     
-    prm = mobileRobotPRM(map, 100);
+    prm = mobileRobotPRM(map_res, 100);
  
     % Generate starting/ending points and angles randomly inside the valid
     % area
@@ -47,13 +57,13 @@ for i = 1:num_traj
         in = isinterior(area.c2,P2);
     end
     
-    a1 = pos.a1 + rand()*pi/8-pi/16;
-    a2 = pos.a2 + rand()*pi/8-pi/16;
+    a1 = obj_pos.a1 + rand()*pi/8-pi/16;
+    a2 = obj_pos.a2 + rand()*pi/8-pi/16;
 
 %     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)];
-%     a1 = pos.a1 + rand()*pi/8-pi/16;
+%     a1 = obj_pos.a1 + rand()*pi/8-pi/16;
 %     P2 = [(area.x2(2)-area.x2(1))*rand()+area.x2(1), (area.y2(2)-area.y2(1))*rand()+area.y2(1)];
-%     a2 = pos.a2 + rand()*pi/8-pi/16;
+%     a2 = obj_pos.a2 + rand()*pi/8-pi/16;
     
     % Plan a path between P1 and P2 using PRM
     path = findpath(prm,P1,P2);
@@ -111,19 +121,45 @@ for i = 1:num_traj
 
     % Get data
     L = SL.length();
-    [x, y, theta, kappa] = SL.evaluate(linspace(0,L,num_points));
-    [dx, dy] = SL.eval_D(linspace(0,L,num_points));
-    dtheta = SL.theta_D(linspace(0,L,num_points));
-    dkappa = SL.kappa_D(linspace(0,L,num_points));
+    samples.s{i} = 0:step:L;
+    if length(samples.s{i}) < num_points
+        error('Too few points for trajectory number %d.', i);
+    end
+    [samples.x{i}, samples.y{i}, samples.theta{i}, samples.kappa{i}] = SL.evaluate(samples.s{i});
+    [samples.dx{i}, samples.dy{i}] = SL.eval_D(samples.s{i});
+    [samples.ddx{i}, samples.ddy{i}] = SL.eval_DD(samples.s{i});
+    [samples.dddx{i}, samples.dddy{i}] = SL.eval_DDD(samples.s{i});
+    samples.dtheta{i} = SL.theta_D(samples.s{i});
+    samples.ddtheta{i} = SL.theta_DD(samples.s{i});
+    samples.dddtheta{i} = SL.theta_DDD(samples.s{i});
+    samples.dkappa{i} = SL.kappa_D(samples.s{i});
+    samples.ddkappa{i} = SL.kappa_DD(samples.s{i});
     
-    samples.x     (i, :) = x     ;
-    samples.y     (i, :) = y     ;
-    samples.theta (i, :) = theta ;
-    samples.kappa (i, :) = kappa ;
-    samples.dx    (i, :) = dx    ;
-    samples.dy    (i, :) = dy    ;
-    samples.dtheta(i, :) = dtheta;
-    samples.dkappa(i, :) = dkappa;
+%     [x, y, theta, kappa] = SL.evaluate(linspace(0,L,num_points));
+%     [dx, dy] = SL.eval_D(linspace(0,L,num_points));
+%     [ddx, ddy] = SL.eval_DD(linspace(0,L,num_points));
+%     [dddx, dddy] = SL.eval_DDD(linspace(0,L,num_points));
+%     dtheta = SL.theta_D(linspace(0,L,num_points));
+%     ddtheta = SL.theta_DD(linspace(0,L,num_points));
+%     dddtheta = SL.theta_DDD(linspace(0,L,num_points));
+%     dkappa = SL.kappa_D(linspace(0,L,num_points));
+%     ddkappa = SL.kappa_DD(linspace(0,L,num_points));
+    
+%     samples.x       (i,:) = x       ;
+%     samples.y       (i,:) = y       ;
+%     samples.dx      (i,:) = dx      ;
+%     samples.dy      (i,:) = dy      ;
+%     samples.ddx     (i,:) = ddx     ;
+%     samples.ddy     (i,:) = ddy     ;
+%     samples.dddx    (i,:) = dddx    ;
+%     samples.dddy    (i,:) = dddy    ;
+%     samples.theta   (i,:) = theta   ;
+%     samples.dtheta  (i,:) = dtheta  ;
+%     samples.ddtheta (i,:) = ddtheta ;
+%     samples.dddtheta(i,:) = dddtheta;
+%     samples.kappa   (i,:) = kappa   ;
+%     samples.dkappa  (i,:) = dkappa  ;
+%     samples.ddkappa (i,:) = ddkappa ;
     
     if options.save
         %fmt = [repmat('%10.5f ', 1, length(samples)-1), '%10.5f\n'];

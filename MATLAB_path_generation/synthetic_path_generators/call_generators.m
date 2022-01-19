@@ -94,31 +94,33 @@ end
 % Plot figure
 figure(100);
 show(map);
+xlim(x_lim);
+ylim(y_lim);
 hold on;
 
 % Get position 1
-[pos.x1, pos.y1] = ginput(1);
-while  checkOccupancy(map,[pos.x1, pos.y1])
-    [pos.x1, pos.y1] = ginput(1);
+[obj_pos.x1, obj_pos.y1] = ginput(1);
+while  checkOccupancy(map,[obj_pos.x1, obj_pos.y1])
+    [obj_pos.x1, obj_pos.y1] = ginput(1);
 end
-plot(pos.x1, pos.y1, 'xk', 'LineStyle', 'none');
+plot(obj_pos.x1, obj_pos.y1, 'xk', 'LineStyle', 'none');
 drawnow;
 % Get angle 1
 [x, y] = ginput(1);
-pos.a1 = atan2((y - pos.y1), (x - pos.x1));
-quiver( pos.x1, pos.y1, LVEC*cos(pos.a1), LVEC*sin(pos.a1), 'Color', 'r' );
+obj_pos.a1 = atan2((y - obj_pos.y1), (x - obj_pos.x1));
+quiver( obj_pos.x1, obj_pos.y1, LVEC*cos(obj_pos.a1), LVEC*sin(obj_pos.a1), 'Color', 'r' );
 
 % Get position 2
-[pos.x2, pos.y2] = ginput(1);
-while  checkOccupancy(map,[pos.x2, pos.y2])
-    [pos.x2, pos.y2] = ginput(1);
+[obj_pos.x2, obj_pos.y2] = ginput(1);
+while  checkOccupancy(map,[obj_pos.x2, obj_pos.y2])
+    [obj_pos.x2, obj_pos.y2] = ginput(1);
 end
-plot(pos.x2, pos.y2, 'xr', 'LineStyle', 'none');
+plot(obj_pos.x2, obj_pos.y2, 'xr', 'LineStyle', 'none');
 drawnow;
 % Get angle 2
 [x, y] = ginput(1);
-pos.a2 = atan2((y - pos.y2), (x - pos.x2));
-quiver( pos.x2, pos.y2, LVEC*cos(pos.a2), LVEC*sin(pos.a2), 'Color', 'r' );
+obj_pos.a2 = atan2((y - obj_pos.y2), (x - obj_pos.x2));
+quiver( obj_pos.x2, obj_pos.y2, LVEC*cos(obj_pos.a2), LVEC*sin(obj_pos.a2), 'Color', 'r' );
 
 % Inflate occupancy map
 map_res = copy(map);
@@ -127,11 +129,11 @@ inflate(map_res, 0.5);
 % Get polygons of inflated map and set as obstacles
 obstacles = map2poly(map_res,res);
 
-ob_map.obstacles = obstacles;
-ob_map.res = res;
-ob_map.map_res = map_res;
+obj_map.obstacles = obstacles;
+obj_map.res = res;
+obj_map.map_res = map_res;
 
 % Call generator
-samples = feval(generator, num_traj, num_points, pos, ob_map, options);
+samples = feval(generator, num_traj, num_points, obj_pos, obj_map, options);
 
 end
