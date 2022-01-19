@@ -70,6 +70,19 @@ if not(isempty(map_name))
         %end
     end
     
+    if x_lim(1) < 0
+        for i = 1:size(obstacles,1)
+            obstacles{i}(1,:) = obstacles{i}(1,:) + abs(x_lim(1));
+        end
+        x_lim = x_lim + abs(x_lim(1));
+    end
+    if y_lim(1) < 0
+        for i = 1:size(obstacles,1)
+            obstacles{i}(2,:) = obstacles{i}(2,:) + abs(y_lim(1));
+        end
+        y_lim = y_lim + abs(y_lim(1));
+    end
+    
     % Create occupancy map
     map = false((x_lim(2)-x_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
     for i = 1:size(obstacles,1)
