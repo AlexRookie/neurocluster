@@ -1,4 +1,5 @@
 *.pyc
 *.asv
 MATLAB_path_generation/__pycache__/
-MATLAB_path_generation/datasets/
+MATLAB_path_generation/datasets/edinburgh*
+MATLAB_path_generation/datasets/thor*
