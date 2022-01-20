@@ -10,7 +10,8 @@ clc;
 %==========================================================================
 
 options.save = false; % save results
-options.plot = true;  % show plot
+options.plot = false; % show plot
+options.show = false; % show statistics
 
 % Folder tree
 addpath(genpath('../functions/'));
@@ -23,9 +24,9 @@ colors = customColors;
 % Dataset file
 files = dir(fullfile('*.mat'));
 
-load('edinburgh_10Sep.mat');
+load('edinburgh_24Aug.mat');
 f=1;
-files(f).name = 'edinburgh_10Sep.mat';
+files(f).name = 'edinburgh_24Aug.mat';
 
 totalRMSE = [];
 totalERR = [];
@@ -59,6 +60,10 @@ totalERR_seg = [];
     ERR_seg = NaN(1,numel(Humans));
     
     for i = 1:numel(Humans)
+        if mod(i,100)==0
+            fprintf("%d/%d\n", i, numel(Humans));
+        end
+        
         if options.plot
             clf(figure(1));
             hold on, grid on, box on, axis equal;
@@ -270,8 +275,10 @@ totalERR_seg = [];
         RMSE(i) = sqrt(mean(dist.^2));
         ERR(i) = max(dist);
         
-        [RMSE(i), RMSE_seg(i), ERR(i), ERR_seg(i)]
-
+        if options.show
+            [RMSE(i), RMSE_seg(i), ERR(i), ERR_seg(i)]
+        end
+        
     end
     
     pause();
@@ -284,14 +291,14 @@ totalERR_seg = [];
 
 %end
 
-
-[totalRMSE, totalRMSE_seg, totalERR, totalERR_seg]
-
-figure(3);
-hold on;
-plot(RMSE);
-plot(RMSE_seg, '--');
-plot(ERR);
-plot(ERR_seg, '--');
+if options.show
+    [totalRMSE, totalRMSE_seg, totalERR, totalERR_seg]    
+    figure(3);
+    hold on;
+    plot(RMSE);
+    plot(RMSE_seg, '--');
+    plot(ERR);
+    plot(ERR_seg, '--');
+end
 
 disp('Done!');
