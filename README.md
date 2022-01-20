@@ -12,4 +12,5 @@ Synthetic autoclustering planner.
 - Numpy >= 1.19.5
 - Matplotlib >= 3.4.3
 
+### External libraries
 The Clothoids library is taken from [here](https://github.com/ebertolazzi/Clothoids).
