@@ -24,10 +24,13 @@ colors = customColors;
 % Dataset file
 files = dir(fullfile('*.mat'));
 
-load('edinburgh_24Aug.mat');
+load('edinburgh_10Sep.mat');
 f=1;
-files(f).name = 'edinburgh_24Aug.mat';
+files(f).name = 'edinburgh_10Sep.mat';
 
+totalMeanL = [];
+totalMinL = [];
+totalMaxL = [];
 totalRMSE = [];
 totalERR = [];
 totalRMSE_seg = [];
@@ -54,6 +57,7 @@ totalERR_seg = [];
   
     LVEC = 0.5;
     
+    L = [];
     RMSE = NaN(1,numel(Humans));
     ERR = NaN(1,numel(Humans));
     RMSE_seg = NaN(1,numel(Humans));
@@ -254,11 +258,11 @@ totalERR_seg = [];
             SL.plot(npts, {'Color','#77AC30','LineWidth',2}, {'Color','#77AC30','LineWidth',2});
         end
                 
-        L = SL.length();
+        l = SL.length();
         n = size(HS,1);
         SL_sampled = NaN(n,2);
         for k = 1:n
-            sl = (k-1)*L/(n-1);
+            sl = (k-1)*l/(n-1);
             [SL_sampled(k,1), SL_sampled(k,2), ~] = SL.evaluate(sl);
         end
         
@@ -275,6 +279,10 @@ totalERR_seg = [];
         RMSE(i) = sqrt(mean(dist.^2));
         ERR(i) = max(dist);
         
+        for k = 1:SL.numSegments()
+            L = [L, SL.get(k).length()];
+        end
+        
         if options.show
             [RMSE(i), RMSE_seg(i), ERR(i), ERR_seg(i)]
         end
@@ -285,6 +293,9 @@ totalERR_seg = [];
     
     totalRMSE = [totalRMSE, nanmean(RMSE)];
     totalERR = [totalERR, nanmean(ERR)];
+    totalMeanL = [totalMeanL, nanmean(L)];
+    totalMinL = [totalMinL, nanmin(L)];
+    totalMaxL = [totalMaxL, nanmax(L)];
     
     totalRMSE_seg = [totalRMSE_seg, nanmean(RMSE_seg)];
     totalERR_seg = [totalERR_seg, nanmean(ERR_seg)];
@@ -293,7 +304,7 @@ totalERR_seg = [];
 
 if options.show
     [totalRMSE, totalRMSE_seg, totalERR, totalERR_seg]    
-    figure(3);
+   options figure(3);
     hold on;
     plot(RMSE);
     plot(RMSE_seg, '--');
