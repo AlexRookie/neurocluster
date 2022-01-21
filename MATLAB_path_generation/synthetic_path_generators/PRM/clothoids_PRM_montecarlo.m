@@ -11,7 +11,7 @@ LVEC = 0.5;
 time = clock();
 rng(time(6));
 
-samples.length   = cell(1,num_traj);
+samples.s        = cell(1,num_traj);
 samples.x        = cell(1,num_traj);
 samples.y        = cell(1,num_traj);
 samples.dx       = cell(1,num_traj);

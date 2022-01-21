@@ -2,20 +2,20 @@ close all;
 clear all;
 clc;
 
+% Parameters
+num_traj   = 10;
+num_points = 200;
+generator = 'clothoids_PRM_montecarlo';
+map = 'test2'; % 'void', 'cross'
+
+options.save = false;
+options.plot = false;
+
 % Folder tree
 addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./Clothoids/'));
 addpath(genpath('./C2xyz_v2/'));
-
-% Parameters
-num_traj   = 10;
-num_points = 200;
-generator = 'clothoids_PRM_montecarlo';
-map = 'cross'; % 'void', 'cross'
-
-options.save = false;
-options.plot = true;
 
 colors = customColors;
 
@@ -35,60 +35,13 @@ cellfun(@plot, samples.x, samples.y);
 %    plot(squeeze(samples(i,1,:)), squeeze(samples(i,2,:)));
 %end
 
-%% Process data
-
 figure(2);
-tiledlayout(4,4, 'Padding', 'none', 'TileSpacing', 'compact');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.x);
-title('x');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.dx);
-title('dx');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.ddx);
-title('ddx');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.dddx);
-title('dddx');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.y);
-title('y');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.dy);
-title('dy');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.ddy);
-grid on;
-title('ddy');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.dddy);
-title('dddy');
-nexttile;
-hold on, grid on;
-cellfun(@(X,Y) plot(X, Y .* 180/pi), samples.s, samples.theta);
-ylim([-180, 180]);
-title('theta');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.dtheta);
-title('dtheta');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.ddtheta);
-title('ddtheta');
-nexttile;
-hold on, grid on;
-cellfun(@plot, samples.s, samples.dddtheta);
-title('dddtheta');
+hold on, grid on, box on, axis equal;
+xlabel('x (m)');
+xlabel('y (m)');
+cellfun(@(X) plot(X(:,1), X(:,2)), Data.Humans);
+
+%% Process data
 
 % Get length vectors
 % for i = 1:num_traj
@@ -138,8 +91,8 @@ end
 
 % Find area limits crossing
 limits_on_traj = NaN(num_traj, numel(limits));
-for k = 1:numel(limits)
-    for i = 1:num_traj
+for i = 1:num_traj
+    for k = 1:numel(limits)
         min_d = Inf;
         min_j = NaN;
         for j = 1:num_points
@@ -156,101 +109,89 @@ for k = 1:numel(limits)
         limits_on_traj(i,k) = min_j;
     end
 end
+% Rem
+limits_on_traj = limits_on_traj(:,all(~isnan(limits_on_traj)));
 
 % Plot
 figure(100);
 for k = 1:numel(limits)
     plot(limits{k}(1,:), limits{k}(2,:), '--', 'linewidth', 1);
-    for i = 1:num_traj
-        if isnan(limits_on_traj(i,k))
-            continue;
-        end
-        plot(samples.x{i}(limits_on_traj(i,k)), samples.y{i}(limits_on_traj(i,k)), '.', 'color', colors{k}, 'markersize', 26, 'linestyle', 'none');
-    end
+end
+for i = 1:num_traj
+    plot(samples.x{i}(limits_on_traj(i,:)), samples.y{i}(limits_on_traj(i,:)), '.', 'color', colors{i}, 'markersize', 26, 'linestyle', 'none');
 end
 
+figure(2);
+tiledlayout(4,4, 'Padding', 'none', 'TileSpacing', 'compact');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.x);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.x, num2cell(1:num_traj));
+title('x');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.dx);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dx, num2cell(1:num_traj));
+title('dx');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.ddx);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
+title('ddx');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.dddx);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
+title('dddx');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.y);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.y, num2cell(1:num_traj));
+title('y');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.dy);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dy, num2cell(1:num_traj));
+title('dy');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.ddy);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddy, num2cell(1:num_traj));
+grid on;
+title('ddy');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.dddy);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddy, num2cell(1:num_traj));
+title('dddy');
+nexttile;
+hold on, grid on;
+cellfun(@(X,Y) plot(X, Y .* 180/pi), samples.s, samples.theta);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.theta, num2cell(1:num_traj));
+ylim([-180, 180]);
+title('theta');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.dtheta);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dtheta, num2cell(1:num_traj));
+title('dtheta');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.ddtheta);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddtheta, num2cell(1:num_traj));
+title('ddtheta');
+nexttile;
+hold on, grid on;
+cellfun(@plot, samples.s, samples.dddtheta);
+cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddtheta, num2cell(1:num_traj));
+title('dddtheta');
 
-% 
-% figure(2);
-% tiledlayout(3,2, 'Padding', 'none', 'TileSpacing', 'compact');
-% nexttile;
-% hold on;
-% plot(1:num_points, samples.theta' * 180/pi);
-% for k = 1:numel(limits)
-%     for i = 1:num_traj
-%         if isnan(limits_on_traj(k,i))
-%             continue;
-%         end
-%         plot(limits_on_traj(k,i), samples.theta(i,limits_on_traj(k,i)) * 180/pi, '.', 'color', colors{k}, 'markersize', 24, 'linestyle', 'none');
+% for i = 1:num_traj
+%     samples
+%     temp = limits_on_traj(i,(~isnan([limits_on_traj(i,:)])));
+%     disp([1, temp(i,1)]);
+%     for k = 1:numel(temp)-1
+%         disp([temp(k), temp(k+1)]);
 %     end
+%     disp([temp(i,end), length(samples.x{i})]);
 % end
-% ylim([-181,181]);
-% grid on;
-% title('Theta');
-% nexttile;
-% hold on;
-% plot(1:num_points, samples.kappa);
-% for k = 1:numel(limits)
-%     for i = 1:num_traj
-%         if isnan(limits_on_traj(k,i))
-%             continue;
-%         end
-%         plot(limits_on_traj(k,i), samples.kappa(i,limits_on_traj(k,i)), '.', 'color', colors{k}, 'markersize', 24, 'linestyle', 'none');
-%     end
-% end
-% grid on;
-% title('Curvature');
-% nexttile;
-% hold on;
-% plot(1:num_points, samples.dtheta);
-% for k = 1:numel(limits)
-%     for i = 1:num_traj
-%         if isnan(limits_on_traj(k,i))
-%             continue;
-%         end
-%         plot(limits_on_traj(k,i), samples.dtheta(i,limits_on_traj(k,i)), '.', 'color', colors{k}, 'markersize', 24, 'linestyle', 'none');
-%     end
-% end
-% grid on;
-% title('∂Theta');
-% nexttile;
-% hold on;
-% plot(1:num_points, samples.dkappa);
-% for k = 1:numel(limits)
-%     for i = 1:num_traj
-%         if isnan(limits_on_traj(k,i))
-%             continue;
-%         end
-%         plot(limits_on_traj(k,i), samples.dkappa(i,limits_on_traj(k,i)), '.', 'color', colors{k}, 'markersize', 24, 'linestyle', 'none');
-%     end
-% end
-% grid on;
-% title('∂Curvature');
-% nexttile;
-% hold on;
-% plot(1:num_points, samples.dx);
-% for k = 1:numel(limits)
-%     for i = 1:num_traj
-%         if isnan(limits_on_traj(k,i))
-%             continue;
-%         end
-%         plot(limits_on_traj(k,i), samples.dx(i,limits_on_traj(k,i)), '.', 'color', colors{k}, 'markersize', 24, 'linestyle', 'none');
-%     end
-% end
-% ylim([-1.1,1.1]);
-% grid on;
-% title('∂x');
-% nexttile;
-% hold on;
-% plot(1:num_points, samples.dy);
-% for k = 1:numel(limits)
-%     for i = 1:num_traj
-%         if isnan(limits_on_traj(k,i))
-%             continue;
-%         end
-%         plot(limits_on_traj(k,i), samples.dy(i,limits_on_traj(k,i)), '.', 'color', colors{k}, 'markersize', 24, 'linestyle', 'none');
-%     end
-% end
-% ylim([-1.1,1.1]);
-% grid on;
-% title('∂y');

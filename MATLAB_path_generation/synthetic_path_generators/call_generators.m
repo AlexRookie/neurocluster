@@ -56,25 +56,32 @@ if not(isempty(map_name))
     
     % Plot map
     if options.plot
-        %fillFlag = true;
-        %figure(101);
-        %hold on, axis equal, grid on, axis tight, box on;
-        %for i = 1:size(obstacles,1)
-        %    xV = obstacles{i,1}(1,:);
-        %    yV = obstacles{i,1}(2,:);
-        %    if fillFlag == 0
-        %        plot(xV, yV, [0.7,0.7,0.65], 'linewidth', 1);
-        %    else
-        %        fill(xV,yV, [0.7,0.7,0.65], 'facealpha', 1);
-        %    end
-        %end
+        fillFlag = true;
+        figure(101);
+        hold on, axis equal, grid on, axis tight, box on;
+        for i = 1:size(obstacles,1)
+           xV = obstacles{i,1}(1,:);
+           yV = obstacles{i,1}(2,:);
+           if fillFlag == 0
+               plot(xV, yV, [0.7,0.7,0.65], 'linewidth', 1);
+           else
+               fill(xV,yV, [0.7,0.7,0.65], 'facealpha', 1);
+           end
+        end
     end
     
+    % Shift map origin
     if x_lim(1) < 0
         for i = 1:size(obstacles,1)
             obstacles{i}(1,:) = obstacles{i}(1,:) + abs(x_lim(1));
         end
         x_lim = x_lim + abs(x_lim(1));
+    end
+    if x_lim(1) > 0
+        for i = 1:size(obstacles,1)
+            obstacles{i}(1,:) = obstacles{i}(1,:) - abs(x_lim(1));
+        end
+        x_lim = x_lim - abs(x_lim(1));
     end
     if y_lim(1) < 0
         for i = 1:size(obstacles,1)
@@ -82,11 +89,17 @@ if not(isempty(map_name))
         end
         y_lim = y_lim + abs(y_lim(1));
     end
+    if y_lim(1) > 0
+        for i = 1:size(obstacles,1)
+            obstacles{i}(2,:) = obstacles{i}(2,:) - abs(y_lim(1));
+        end
+        y_lim = y_lim - abs(y_lim(1));
+    end
     
     % Create occupancy map
-    map = false((x_lim(2)-x_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
+    map = false((y_lim(2)-y_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
     for i = 1:size(obstacles,1)
-        map = map | poly2mask(obstacles{i,1}(1,:).*res, obstacles{i,1}(2,:).*res, (x_lim(2)-x_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
+        map = map | poly2mask(obstacles{i,1}(1,:).*res, obstacles{i,1}(2,:).*res, (y_lim(2)-y_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
     end
     map = flip(map);
     map = binaryOccupancyMap(map,res);
