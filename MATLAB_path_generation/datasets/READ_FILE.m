@@ -1,6 +1,6 @@
 % Analise dataset
 % Alessandro Antonucci @AlexRookie
-% Placifo Falqueto
+% Placido Falqueto
 % University of Trento
 
 close all;
