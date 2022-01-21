@@ -4,12 +4,12 @@ clc;
 
 % Parameters
 num_traj   = 10;
-num_points = 200;
+num_points = 100;
 generator = 'clothoids_PRM_montecarlo';
-map = 'test2'; % 'void', 'cross'
+map = 'thor3'; % 'void', 'cross', 'povo', 'test', 'thor1'
 
 options.save = false;
-options.plot = false;
+options.plot = true;
 
 % Folder tree
 addpath(genpath('./functions/'));
@@ -35,11 +35,11 @@ cellfun(@plot, samples.x, samples.y);
 %    plot(squeeze(samples(i,1,:)), squeeze(samples(i,2,:)));
 %end
 
-figure(2);
-hold on, grid on, box on, axis equal;
-xlabel('x (m)');
-xlabel('y (m)');
-cellfun(@(X) plot(X(:,1), X(:,2)), Data.Humans);
+% figure(2);
+% hold on, grid on, box on, axis equal;
+% xlabel('x (m)');
+% xlabel('y (m)');
+% cellfun(@(X) plot(X(:,1), X(:,2)), Data.Humans);
 
 %% Process data
 

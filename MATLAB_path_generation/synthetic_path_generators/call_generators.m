@@ -1,9 +1,11 @@
 function samples = call_generators(generator, map_name, num_traj, num_points, options)
 
-res = 10;
-obstacles = cell(0);
+res = 10;        % occupancy map resolution
+inflation = 0.5; % obstacles inflation (meters)
 
-LVEC = 0.5;
+l_vec = 0.5; % orientation angle length (for plot)
+
+obstacles = cell(0);
 
 % Load map
 if not(isempty(map_name))
@@ -54,23 +56,23 @@ if not(isempty(map_name))
     % Close file
     fclose(fid);
     
-    % Plot map
-    if options.plot
-        fillFlag = true;
-        figure(101);
-        hold on, axis equal, grid on, axis tight, box on;
-        for i = 1:size(obstacles,1)
-           xV = obstacles{i,1}(1,:);
-           yV = obstacles{i,1}(2,:);
-           if fillFlag == 0
-               plot(xV, yV, [0.7,0.7,0.65], 'linewidth', 1);
-           else
-               fill(xV,yV, [0.7,0.7,0.65], 'facealpha', 1);
-           end
+    % Plot obstacle map
+    %{
+    fillFlag = true;
+    figure(101);
+    hold on, axis equal, grid on, axis tight, box on;
+    for i = 1:size(obstacles,1)
+        xV = obstacles{i,1}(1,:);
+        yV = obstacles{i,1}(2,:);
+        if fillFlag == 0
+            plot(xV, yV, [0.7,0.7,0.65], 'linewidth', 1);
+        else
+            fill(xV,yV, [0.7,0.7,0.65], 'facealpha', 1);
         end
     end
+    %}
     
-    % Shift map origin
+    % Shift map origin to (0,0)
     if x_lim(1) < 0
         for i = 1:size(obstacles,1)
             obstacles{i}(1,:) = obstacles{i}(1,:) + abs(x_lim(1));
@@ -101,7 +103,7 @@ if not(isempty(map_name))
     for i = 1:size(obstacles,1)
         map = map | poly2mask(obstacles{i,1}(1,:).*res, obstacles{i,1}(2,:).*res, (y_lim(2)-y_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
     end
-    map = flip(map);
+    map = flipud(map);
     map = binaryOccupancyMap(map,res);
 end
 
@@ -134,8 +136,7 @@ drawnow;
 % Get angle 1
 [x, y] = ginput(1);
 obj_pos.a1 = atan2((y - obj_pos.y1), (x - obj_pos.x1));
-quiver( obj_pos.x1, obj_pos.y1, LVEC*cos(obj_pos.a1), LVEC*sin(obj_pos.a1), 'Color', 'r' );
-
+quiver( obj_pos.x1, obj_pos.y1, l_vec*cos(obj_pos.a1), l_vec*sin(obj_pos.a1), 'Color', 'r' );
 % Get position 2
 [obj_pos.x2, obj_pos.y2] = ginput(1);
 while  checkOccupancy(map,[obj_pos.x2, obj_pos.y2])
@@ -146,16 +147,21 @@ drawnow;
 % Get angle 2
 [x, y] = ginput(1);
 obj_pos.a2 = atan2((y - obj_pos.y2), (x - obj_pos.x2));
-quiver( obj_pos.x2, obj_pos.y2, LVEC*cos(obj_pos.a2), LVEC*sin(obj_pos.a2), 'Color', 'r' );
+quiver( obj_pos.x2, obj_pos.y2, l_vec*cos(obj_pos.a2), l_vec*sin(obj_pos.a2), 'Color', 'r' );
 
 % Inflate occupancy map
 map_res = copy(map);
-inflate(map_res, 0.5);
+inflate(map_res, inflation);
 
 % Get polygons of inflated map and set as obstacles
-obstacles = map2poly(map_res,res);
+poly_obstacles = map2poly(map_res, res);
 
-obj_map.obstacles = obstacles;
+% DEBUG
+% for i = 1:size(poly_obstacles)
+%     plot(poly_obstacles{i}(1,:),poly_obstacles{i}(2,:), 'g');
+% end
+
+obj_map.obstacles = poly_obstacles;
 obj_map.res = res;
 obj_map.map_res = map_res;
 

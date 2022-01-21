@@ -1,12 +1,12 @@
 function samples = clothoids_PRM_montecarlo(num_traj, num_points, obj_pos, obj_map, options)
 
 obstacles = obj_map.obstacles;
-res = obj_map.res;
+%res = obj_map.res;
 map_res = obj_map.map_res;
 
 step = 0.05; % sampling step (cm)
 
-LVEC = 0.5;
+l_vec = 0.5; % orientation angle length (for plot)
 
 time = clock();
 rng(time(6));
@@ -167,18 +167,10 @@ for i = 1:num_traj
     end
     
     if options.plot
-        plot(P1(1), P1(2), 'ro', ...
-            'MarkerEdgeColor','k',...
-            'MarkerFaceColor','g',...
-            'MarkerSize',5);
-        
-        plot(P2(1), P2(2), 'bo', ...
-            'MarkerEdgeColor','k',...
-            'MarkerFaceColor','y',...
-            'MarkerSize',5);
-        
-        quiver( P1(1), P1(2), LVEC*cos(a1), LVEC*sin(a1), 'Color', 'r' );
-        quiver( P2(1), P2(2), LVEC*cos(a2), LVEC*sin(a2), 'Color', 'r' );
+        plot(P1(1), P1(2), 'ro', 'MarkerEdgeColor','k', 'MarkerFaceColor','g', 'MarkerSize',5);
+        plot(P2(1), P2(2), 'bo', 'MarkerEdgeColor','k', 'MarkerFaceColor','y', 'MarkerSize',5);
+        quiver( P1(1), P1(2), l_vec*cos(a1), l_vec*sin(a1), 'Color', 'r' );
+        quiver( P2(1), P2(2), l_vec*cos(a2), l_vec*sin(a2), 'Color', 'r' );
     end
 end
 
