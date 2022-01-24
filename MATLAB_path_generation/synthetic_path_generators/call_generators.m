@@ -1,7 +1,7 @@
 function samples = call_generators(generator, map_name, num_traj, num_points, options)
 
 res = 10;        % occupancy map resolution
-inflation = 0.5; % obstacles inflation (meters)
+inflation = 0.2; % obstacles inflation (meters)
 
 l_vec = 0.5; % orientation angle length (for plot)
 
