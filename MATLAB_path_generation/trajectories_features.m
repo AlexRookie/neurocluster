@@ -2,54 +2,71 @@ close all;
 clear classes;
 clc;
 
+% Parameters
+num_traj   = 10;                         % number of trajectories
+num_points = 100;                        % MINIMUM number of points
+generator = 'clothoids_PRM_montecarlo';  % path planner
+map = 'test';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
+
+options.save = false;
+options.plot = true;
+
+%-------------------------------------------------------------------------%
+
 % Folder tree
+addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./Clothoids/'));
+addpath(genpath('./C2xyz_v2/'));
+
+colors = customColors;
 
 % Import python module
-pymodule = py.importlib.import_module('network');
+pymodule = py.importlib.import_module('network_som');
 py.importlib.reload(pymodule);
 
-%%
-% Generate data
+%% Generate data
 
-num_traj = 300;
-num_points = 50;
-
-options_save = false;
-options_plot = false;
-
-% Call path clustering
-clothoids_PRM_montecarlo_voidMap;
+% Call path generator
+myTrajectories = call_generators(generator, map, num_traj, num_points, options);
 
 % Plot dataset
 figure(1);
 hold on, grid on, box on, axis equal;
-xlabel('x');
-xlabel('y');
+xlabel('x (m)');
+xlabel('y (m)');
 title('Dataset');
-for i =1:num_traj
-    plot(squeeze(samples(i,1,:)), squeeze(samples(i,2,:)));
-end
+cellfun(@plot, myTrajectories.x, myTrajectories.y);
+%for i =1:num_traj
+%    plot(squeeze(samples(i,1,:)), squeeze(samples(i,2,:)));
+%end
 
 % Shift trajectories to origin
 %shift_samples = samples - samples(:,:,1);
 
 % Normalise samples
-norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
+%norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
 
 % Denormalise samples
 % denorm_samples = norm_samples.*(max(samples,[],3)-min(samples,[],3)) + min(samples,[],3);
 
-%%
-% Train network
+% Extract samples
+if min(cellfun(@length, myTrajectories.s)) < num_points
+    error("Not enough points for the trajectories.");
+end
+samples(:,1,:) = cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.x, 'UniformOutput', false)');
+samples(:,2,:) = cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.y, 'UniformOutput', false)');
 
-epochs = 300;
+%% Train network
+
+epochs = 1000;
 batch  = 128;
 learn_rate = 0.005;
+som_size = [10, 10];
 
 % Initialize network and load Keras model
-pynet = pymodule.Network(epochs, batch, learn_rate);
+%pynet = pymodule.Network(epochs, batch, learn_rate);
+pynet = pymodule.Network(som_size, epochs, batch, learn_rate);
 
 % Define neural network model
 pynet.define_model(num_points);
@@ -59,17 +76,35 @@ pynet.define_model(num_points);
 % autoencoder = models{3};
 
 % Load dataset
-data = pynet.prepare_data(norm_samples, 80);
+data = pynet.prepare_data(samples, 80);
 
 X_train = double(data{1});
 X_valid = double(data{2});
 
 % Train network
-trained = pynet.train_model(X_train);
+model = pynet.train_model(X_train);
 
-encoder = trained{1};
-decoder = trained{2};
-autoencoder = trained{3};
+% Plot
+som_weights = double(model.get_layer('SOM').get_weights{1});
+fig = figure(2);
+tiledlayout(som_size(1), som_size(2), 'Padding', 'none', 'TileSpacing', 'compact');
+for k = 1:som_size(1)*som_size(2)
+    nexttile;
+    tmp = reshape(som_weights(k,:), num_points, 2);
+    plot(tmp(1,:), tmp(2,:));
+    grid on, box on;
+    %set(gca,'visible','off');
+end
+
+
+%%
+
+% Autoencoder NN
+
+%{
+% encoder = trained{1};
+% decoder = trained{2};
+% autoencoder = trained{3};
 
 fit = trained{4};
 fit_rmse = cellfun(@double,(cell(struct(fit.history).rmse)));
@@ -129,3 +164,5 @@ plot(rmse_y);
 xlabel('samples');
 legend({'x','y'});
 title('Rmse');
+%}
+

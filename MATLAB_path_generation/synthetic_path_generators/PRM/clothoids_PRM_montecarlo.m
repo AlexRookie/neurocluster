@@ -44,8 +44,7 @@ for i = 1:num_traj
     
     prm = mobileRobotPRM(map_res, 100);
  
-    % Generate starting/ending points and angles randomly inside the valid
-    % area
+    % Generate starting/ending points and angles randomly inside the valid area
     in=0;
     while ~in
         P1 = [unifrnd( min(area.c1.Vertices(:,1)), max(area.c1.Vertices(:,1)) ), unifrnd( min(area.c1.Vertices(:,2)), max(area.c1.Vertices(:,2)) )];
@@ -72,9 +71,6 @@ for i = 1:num_traj
     path(end-1,:)=[];
     path = path(1:ceil(length(path)/6):end,:);
 
-    % Plot the PRM path
-    % plot(path(:,1),path(:,2),'LineWidth',2)
-
     d = pdist([path(end,1:2);P2],'euclidean');
     if d < 1
         path(end,:) = P2;
@@ -82,8 +78,10 @@ for i = 1:num_traj
         path(end+1,:) = P2;
     end
     
-    % Build the spline using the points planned with PRM until there is no
-    % collisions
+    % Plot the PRM path
+    % plot(path(:,1),path(:,2),'LineWidth',2)
+    
+    % Build the spline using the points planned with PRM until there is no collisions
     collision = true;
     while collision
 

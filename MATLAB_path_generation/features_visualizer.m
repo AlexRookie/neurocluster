@@ -11,6 +11,8 @@ map = 'test';                            % map: 'void', 'cross', 'povo', 'test',
 options.save = false;
 options.plot = true;
 
+%-------------------------------------------------------------------------%
+
 % Folder tree
 addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
@@ -21,8 +23,8 @@ colors = customColors;
 
 %% Generate data
 
-% Call path clustering
-samples = call_generators(generator, map, num_traj, num_points, options);
+% Call path generator
+myTrajectories = call_generators(generator, map, num_traj, num_points, options);
 
 % Plot dataset
 figure(1);
@@ -30,7 +32,7 @@ hold on, grid on, box on, axis equal;
 xlabel('x (m)');
 xlabel('y (m)');
 title('Dataset');
-cellfun(@plot, samples.x, samples.y);
+cellfun(@plot, myTrajectories.x, myTrajectories.y);
 %for i =1:num_traj
 %    plot(squeeze(samples(i,1,:)), squeeze(samples(i,2,:)));
 %end
@@ -71,53 +73,53 @@ figure(2);
 tiledlayout(4,4, 'Padding', 'none', 'TileSpacing', 'compact');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.x);
+cellfun(@plot, myTrajectories.s, myTrajectories.x);
 title('x');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.dx);
+cellfun(@plot, myTrajectories.s, myTrajectories.dx);
 title('dx');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.ddx);
+cellfun(@plot, myTrajectories.s, myTrajectories.ddx);
 title('ddx');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.dddx);
+cellfun(@plot, myTrajectories.s, myTrajectories.dddx);
 title('dddx');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.y);
+cellfun(@plot, myTrajectories.s, myTrajectories.y);
 title('y');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.dy);
+cellfun(@plot, myTrajectories.s, myTrajectories.dy);
 title('dy');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.ddy);
+cellfun(@plot, myTrajectories.s, myTrajectories.ddy);
 grid on;
 title('ddy');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.dddy);
+cellfun(@plot, myTrajectories.s, myTrajectories.dddy);
 title('dddy');
 nexttile;
 hold on, grid on;
-cellfun(@(X,Y) plot(X, Y .* 180/pi), samples.s, samples.theta);
+cellfun(@(X,Y) plot(X, Y .* 180/pi), myTrajectories.s, myTrajectories.theta);
 ylim([-180, 180]);
 title('theta');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.dtheta);
+cellfun(@plot, myTrajectories.s, myTrajectories.dtheta);
 title('dtheta');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.ddtheta);
+cellfun(@plot, myTrajectories.s, myTrajectories.ddtheta);
 title('ddtheta');
 nexttile;
 hold on, grid on;
-cellfun(@plot, samples.s, samples.dddtheta);
+cellfun(@plot, myTrajectories.s, myTrajectories.dddtheta);
 title('dddtheta');
 
 %%
@@ -148,12 +150,12 @@ end
 limits_on_traj = cell(num_traj,1);
 for i = 1:num_traj
     jj = 1;
-    for j = 1:length(samples.s{i})
+    for j = 1:length(myTrajectories.s{i})
         min_d = Inf;
         min_j = NaN;
         for k = 1:numel(limits)
             a = limits{k}(:,1)' - limits{k}(:,2)';
-            b = [samples.x{i}(j), samples.y{i}(j)] - limits{k}(:,2)';
+            b = [myTrajectories.x{i}(j), myTrajectories.y{i}(j)] - limits{k}(:,2)';
             a(3) = 0;
             b(3) = 0;
             d = norm(cross(a,b)) / norm(a);
@@ -189,34 +191,34 @@ for k = 1:numel(limits)
     plot(limits{k}(1,:), limits{k}(2,:), '--', 'linewidth', 1);
 end
 for i = 1:num_traj
-    plot(samples.x{i}(limits_on_traj{i}), samples.y{i}(limits_on_traj{i}), '.', 'color', colors{i}, 'markersize', 26, 'linestyle', 'none');
+    plot(myTrajectories.x{i}(limits_on_traj{i}), myTrajectories.y{i}(limits_on_traj{i}), '.', 'color', colors{i}, 'markersize', 26, 'linestyle', 'none');
 end
 
 figure(2);
 nexttile(1);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.x, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.x, num2cell(1:num_traj));
 nexttile(2);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dx, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.dx, num2cell(1:num_traj));
 nexttile(3);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.ddx, num2cell(1:num_traj));
 nexttile(4);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.ddx, num2cell(1:num_traj));
 nexttile(5);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.y, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.y, num2cell(1:num_traj));
 nexttile(6);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dy, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.dy, num2cell(1:num_traj));
 nexttile(7);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddy, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.ddy, num2cell(1:num_traj));
 nexttile(8);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddy, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.dddy, num2cell(1:num_traj));
 nexttile(9);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.theta, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.theta, num2cell(1:num_traj));
 nexttile(10);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dtheta, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.dtheta, num2cell(1:num_traj));
 nexttile(11);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddtheta, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.ddtheta, num2cell(1:num_traj));
 nexttile(12);
-cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddtheta, num2cell(1:num_traj));
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), myTrajectories.s, myTrajectories.dddtheta, num2cell(1:num_traj));
 
 
 
