@@ -3,10 +3,10 @@ clear all;
 clc;
 
 % Parameters
-num_traj   = 10;
-num_points = 100;
-generator = 'clothoids_PRM_montecarlo';
-map = 'thor3'; % 'void', 'cross', 'povo', 'test', 'thor1'
+num_traj   = 10;                         % number of trajectories
+num_points = 100;                        % MINIMUM number of points
+generator = 'clothoids_PRM_montecarlo';  % path planner
+map = 'test';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
 
 options.save = false;
 options.plot = true;
@@ -66,132 +66,157 @@ cellfun(@plot, samples.x, samples.y);
 %     b(end+1,:) = samples.x(i,k:k+w);
 % end
 
-% Get area limits
-area_file = [map, '_areas'];
-if not(isempty(area_file))
-    % Open file
-    fid = fopen([area_file,'.txt'],'r');
-    if fid == -1
-        error(['Impossible to open file: ', map_name]);
-    end
-    
-    limits = cell(0);    
-    while ~feof(fid)
-        line = fgets(fid);
-        pts_ini = sscanf(line, '%f %f');
-        line = fgets(fid);
-        pts_fin = sscanf(line, '%f %f');
-        % Segment vertices
-        limits(end+1,1) = {[pts_ini(1), pts_fin(1); pts_ini(2), pts_fin(2)]};
-    end
-    
-    % Close file
-    fclose(fid);
-end
-
-% Find area limits crossing
-limits_on_traj = NaN(num_traj, numel(limits));
-for i = 1:num_traj
-    for k = 1:numel(limits)
-        min_d = Inf;
-        min_j = NaN;
-        for j = 1:num_points
-            a = limits{k}(:,1)' - limits{k}(:,2)';
-            b = [samples.x{i}(j), samples.y{i}(j)] - limits{k}(:,2)';
-            a(3) = 0;
-            b(3) = 0;
-            d = norm(cross(a,b)) / norm(a);
-            if d < min_d && d < 0.3
-                min_d = d;
-                min_j = j;
-            end
-        end
-        limits_on_traj(i,k) = min_j;
-    end
-end
-% Rem
-limits_on_traj = limits_on_traj(:,all(~isnan(limits_on_traj)));
-
 % Plot
-figure(100);
-for k = 1:numel(limits)
-    plot(limits{k}(1,:), limits{k}(2,:), '--', 'linewidth', 1);
-end
-for i = 1:num_traj
-    plot(samples.x{i}(limits_on_traj(i,:)), samples.y{i}(limits_on_traj(i,:)), '.', 'color', colors{i}, 'markersize', 26, 'linestyle', 'none');
-end
-
 figure(2);
 tiledlayout(4,4, 'Padding', 'none', 'TileSpacing', 'compact');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.x);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.x, num2cell(1:num_traj));
 title('x');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.dx);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dx, num2cell(1:num_traj));
 title('dx');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.ddx);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
 title('ddx');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.dddx);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
 title('dddx');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.y);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.y, num2cell(1:num_traj));
 title('y');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.dy);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dy, num2cell(1:num_traj));
 title('dy');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.ddy);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddy, num2cell(1:num_traj));
 grid on;
 title('ddy');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.dddy);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddy, num2cell(1:num_traj));
 title('dddy');
 nexttile;
 hold on, grid on;
 cellfun(@(X,Y) plot(X, Y .* 180/pi), samples.s, samples.theta);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.theta, num2cell(1:num_traj));
 ylim([-180, 180]);
 title('theta');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.dtheta);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dtheta, num2cell(1:num_traj));
 title('dtheta');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.ddtheta);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddtheta, num2cell(1:num_traj));
 title('ddtheta');
 nexttile;
 hold on, grid on;
 cellfun(@plot, samples.s, samples.dddtheta);
-cellfun(@(X,Y,I) plot(X(limits_on_traj(I,:)), Y(limits_on_traj(I,:)), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddtheta, num2cell(1:num_traj));
 title('dddtheta');
 
-% for i = 1:num_traj
-%     samples
-%     temp = limits_on_traj(i,(~isnan([limits_on_traj(i,:)])));
-%     disp([1, temp(i,1)]);
-%     for k = 1:numel(temp)-1
-%         disp([temp(k), temp(k+1)]);
-%     end
-%     disp([temp(i,end), length(samples.x{i})]);
-% end
+%%
+
+% Get area limits
+area_file = [map, '_areas'];
+limits = cell(0);
+if not(isempty(area_file))
+    % Open file
+    fid = fopen([area_file,'.txt'],'r');
+    if not(fid == -1)
+        while ~feof(fid)
+            line = fgets(fid);
+            pts_ini = sscanf(line, '%f %f');
+            line = fgets(fid);
+            pts_fin = sscanf(line, '%f %f');
+            % Segment vertices
+            limits(end+1,1) = {[pts_ini(1), pts_fin(1); pts_ini(2), pts_fin(2)]};
+        end
+        % Close file
+        fclose(fid);
+    else
+        disp(['Impossible to open file: ', area_file]);
+    end
+end
+
+% Find area limits crossing
+limits_on_traj = cell(num_traj,1);
+for i = 1:num_traj
+    jj = 1;
+    for j = 1:length(samples.s{i})
+        min_d = Inf;
+        min_j = NaN;
+        for k = 1:numel(limits)
+            a = limits{k}(:,1)' - limits{k}(:,2)';
+            b = [samples.x{i}(j), samples.y{i}(j)] - limits{k}(:,2)';
+            a(3) = 0;
+            b(3) = 0;
+            d = norm(cross(a,b)) / norm(a);
+            if d < min_d && d < 0.05
+                min_d = d;
+                min_j = j;
+            end
+        end
+        if not(isnan(min_j))
+            limits_on_traj{i}(jj) = min_j;
+            jj = jj+1;
+        end
+    end
+end
+% Remove subsequent points
+for i = 1:num_traj
+    to_del = [];
+    for j = 1:length(limits_on_traj{i})-1
+        if (limits_on_traj{i}(j)+1 == limits_on_traj{i}(j+1))
+            to_del = [to_del, j];
+        end
+    end
+    limits_on_traj{i}(to_del) = [];
+end
+
+
+%limits_on_traj = limits_on_traj(all(~isnan(limits_on_traj)));
+
+% Plot
+
+figure(100);
+for k = 1:numel(limits)
+    plot(limits{k}(1,:), limits{k}(2,:), '--', 'linewidth', 1);
+end
+for i = 1:num_traj
+    plot(samples.x{i}(limits_on_traj{i}), samples.y{i}(limits_on_traj{i}), '.', 'color', colors{i}, 'markersize', 26, 'linestyle', 'none');
+end
+
+figure(2);
+nexttile(1);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.x, num2cell(1:num_traj));
+nexttile(2);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dx, num2cell(1:num_traj));
+nexttile(3);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
+nexttile(4);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddx, num2cell(1:num_traj));
+nexttile(5);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.y, num2cell(1:num_traj));
+nexttile(6);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dy, num2cell(1:num_traj));
+nexttile(7);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddy, num2cell(1:num_traj));
+nexttile(8);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddy, num2cell(1:num_traj));
+nexttile(9);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.theta, num2cell(1:num_traj));
+nexttile(10);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dtheta, num2cell(1:num_traj));
+nexttile(11);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.ddtheta, num2cell(1:num_traj));
+nexttile(12);
+cellfun(@(X,Y,I) plot(X(limits_on_traj{I}), Y(limits_on_traj{I}), '.', 'color', colors{I}, 'markersize', 24, 'linestyle', 'none'), samples.s, samples.dddtheta, num2cell(1:num_traj));
+
+
+
