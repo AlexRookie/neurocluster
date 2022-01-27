@@ -28,12 +28,6 @@ samples.kappa    = cell(1,num_traj);
 samples.dkappa   = cell(1,num_traj);
 samples.ddkappa  = cell(1,num_traj);
 
-% Save data
-if options.save
-    FileName = "Prova.txt";
-    fid = fopen(FileName, 'w');
-end
-
 % Find a valid area to generate starting/ending points
 area = montecarlo_area(obstacles, obj_pos);
 
@@ -159,21 +153,12 @@ for i = 1:num_traj
 %     samples.dkappa  (i,:) = dkappa  ;
 %     samples.ddkappa (i,:) = ddkappa ;
     
-    if options.save
-        %fmt = [repmat('%10.5f ', 1, length(samples)-1), '%10.5f\n'];
-        %fprintf(fid, fmt, samples);
-    end
-    
     if options.plot
         plot(P1(1), P1(2), 'ro', 'MarkerEdgeColor','k', 'MarkerFaceColor','g', 'MarkerSize',5);
         plot(P2(1), P2(2), 'bo', 'MarkerEdgeColor','k', 'MarkerFaceColor','y', 'MarkerSize',5);
         quiver( P1(1), P1(2), l_vec*cos(a1), l_vec*sin(a1), 'Color', 'r' );
         quiver( P2(1), P2(2), l_vec*cos(a2), l_vec*sin(a2), 'Color', 'r' );
     end
-end
-
-if options.save
-    fclose(fid);
 end
 
 end
