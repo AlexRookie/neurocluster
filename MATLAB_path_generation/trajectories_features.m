@@ -4,10 +4,10 @@ clc;
 
 % Parameters
 num_traj    = 50;                        % number of trajectories
-num_points  = 150;                       % MINIMUM number of points
+num_points  = 100;                       % MINIMUM number of points
 num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
-map = 'void';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
+map = 'cross';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
 window = 20;
 
 %dataset = 'edinburgh_10Sep';
@@ -31,10 +31,10 @@ py.importlib.reload(pymodule);
 
 %% Generate data
 
+%load('data_cross.mat');
+
 % Load dataset
 %myTrajectories = load_dataset(dataset, num_points, options);
-
-load('data.mat');
 
 % X = [], y = [];
 % for i = 1:200
@@ -50,11 +50,16 @@ load('data.mat');
 %     y = [y; 2];
 % end
 
-positions = [6, 10, 0.0, 12, 16,  pi/2;
-             6, 10, 0.0, 12,  4, -pi/2;
-             6, 10, 0.0, 16, 10,   0.0];
-
-%{
+if strcmp(map, 'void')
+    positions = [6, 10, 0.0, 12, 16,  pi/2;
+                 6, 10, 0.0, 12,  4, -pi/2;
+                 6, 10, 0.0, 16, 10,   0.0];
+elseif strcmp(map, 'cross')
+    positions = [5, 10, 0.0, 10, 15,  pi/2;
+                 5, 10, 0.0, 10,  5, -pi/2;
+                 5, 10, 0.0, 17, 10,   0.0];
+end
+     
 Xx = [];
 Xy = [];
 Xtheta = [];
@@ -65,8 +70,6 @@ l = 1;
 for i = 1:num_classes
     % Call path generator
     %myTrajectories = call_generator_manual(generator, map, num_traj, num_points, options);
-    pos_1 = [6, 10, 0.0];
-    pos_2 = [12, 16, pi/2];
     myTrajectories = call_generator(generator, map, positions(i,:), num_traj, num_points, options);
     
     %fig2 = trajectories_visualizer(myTrajectories);
@@ -104,7 +107,6 @@ xlabel('x (m)');
 xlabel('y (m)');
 title('Dataset');
 plot(Xx, Xy);
-%}
 
 % Prepare data
 X = [Xx-Xx(:,1), Xy-Xy(:,1), Xkappa];
@@ -116,7 +118,7 @@ X = [Xx-Xx(:,1), Xy-Xy(:,1), Xkappa];
 % Denormalise samples
 % denorm_samples = norm_samples.*(max(samples,[],3)-min(samples,[],3)) + min(samples,[],3);
 
-%% Train network
+%% LVQ network
 
 epochs = 500;
 batch  = 32;
@@ -226,9 +228,7 @@ vec2ind(a)'
 %-------------------------------------------------------------------------%
 %}
 
-%%
-
-% Autoencoder NN
+%% Autoencoder NN
 
 %{
 % encoder = trained{1};

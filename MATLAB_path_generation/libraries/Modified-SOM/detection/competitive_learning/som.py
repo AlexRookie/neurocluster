@@ -4,6 +4,7 @@ from .base import CompetitiveNetwork
 from .utils import default_learning_rate_decay_function
 from .utils import default_sigma_decay_function
 from .utils import weights_initialize
+from time import sleep
 
 class SOM(CompetitiveNetwork):
   """Self organizing map.
@@ -106,6 +107,7 @@ class SOM(CompetitiveNetwork):
       self._quantization_error = np.append(self._quantization_error, self.quantization_error(X))
       if verbose:
         print('Unsupervised learning iteration {}/{}: quantization error: {:.4f}'.format(i + 1, num_iters, self._quantization_error[-1]))
+        sleep(0.001)
     self._n_batches += num_iters // batch_size + int(num_iters % batch_size != 0)
     return self
 
@@ -370,6 +372,7 @@ class CombineSomLvq(SOM):
       self._quantization_error = np.append(self._quantization_error, self.quantization_error(X))
       if verbose:
         print('Supervised learning iteration {}/{}: quantization error: {:.4f}'.format(i + 1, num_iters, self._quantization_error[-1]))
+        sleep(0.001)
     self._n_batches += num_iters // batch_size + int(num_iters % batch_size != 0)
     return self
 

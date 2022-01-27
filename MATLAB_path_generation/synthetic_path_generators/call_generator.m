@@ -120,7 +120,7 @@ end
 % map = binaryOccupancyMap(im,res);
 
 % Plot figure
-figure(100);
+figure(randi([1,500]));
 show(map);
 xlim(x_lim);
 ylim(y_lim);
