@@ -10,6 +10,12 @@ generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'cross';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
 window = 20;
 
+epochs_unsup = 300;
+epochs_sup   = 200;
+batch = 64;
+learn_rate = 0.05;
+som_size = [10, 10];
+
 %dataset = 'edinburgh_10Sep';
 
 options.save = false;
@@ -30,8 +36,6 @@ pymodule = py.importlib.import_module('network_lvq');
 py.importlib.reload(pymodule);
 
 %% Generate data
-
-%load('data_cross.mat');
 
 % Load dataset
 %myTrajectories = load_dataset(dataset, num_points, options);
@@ -59,7 +63,10 @@ elseif strcmp(map, 'cross')
                  5, 10, 0.0, 10,  5, -pi/2;
                  5, 10, 0.0, 17, 10,   0.0];
 end
-     
+
+load('data_cross2.mat');
+
+%{
 Xx = [];
 Xy = [];
 Xtheta = [];
@@ -99,6 +106,7 @@ for i = 1:num_classes
     %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
     %encoding = [encoding; ones(num_traj,1)*(i-1)];
 end
+%}
 
 % Plot dataset
 figure(1);
@@ -120,11 +128,6 @@ X = [Xx-Xx(:,1), Xy-Xy(:,1), Xkappa];
 
 %% LVQ network
 
-epochs = 500;
-batch  = 32;
-learn_rate = 0.05;
-som_size = [10, 10];
-
 % Initialize network and load Keras model
 %pynet = pymodule.Network(epochs, batch, learn_rate);
 %pynet = pymodule.Network(som_size, epochs, batch, learn_rate);
@@ -138,25 +141,45 @@ pynet.define_model(som_size);
 % autoencoder = models{3};
 
 % Load dataset
-data = pynet.prepare_data(X, y, 80, batch, 1);
+samples = pynet.prepare_data(X, y, 80, batch, 1);
 
-X_train = double(data{1});
-y_train = double(data{2});
-X_valid = double(data{3});
-y_valid = double(data{4});
+X_train = double(samples{1});
+y_train = double(samples{2});
+X_valid = double(samples{3});
+y_valid = double(samples{4});
 
-%%
+%% Train network
 
-% Train network
-model = pynet.train_model(X_train, y_train, epochs, learn_rate);
+% Train
+model = pynet.train_model(X_train, y_train, epochs_unsup, epochs_sup, learn_rate);
 
-%%
+%% Inference
 
+% Predict
 y_pred = pynet.predict(X_valid, y_valid);
 y_pred = double(y_pred);
 
 % Plot confusion matrix
 confusion_matrix(y_valid, y_pred);
+
+data = pynet.get_data();
+weights = double(data{1});
+labels = double(data{2});
+
+% Get label vector
+reshape(labels,10,10)
+
+% Plot som weights
+figure(50);
+tiledlayout(som_size(1), som_size(2), 'Padding', 'none', 'TileSpacing', 'compact');
+for k = 1:som_size(1)*som_size(2)
+    nexttile;
+    tmp = reshape(weights(k,:), window, num_classes);
+    plot(tmp(:,1), tmp(:,2));
+    grid on, box on, axis equal;
+    set(gca,'visible','off');
+    drawnow;
+end
 
 %% SOM
 

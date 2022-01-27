@@ -56,18 +56,18 @@ class Network:
         self.y_train = np.array(y_train)
         self.X_valid = np.array(X_valid)
         self.y_valid = np.array(y_valid)
-
         return self.X_train, self.y_train, self.X_valid, self.y_valid
 
-    def train_model(self, X_train, y_train, epochs=50, learn_rate=0.01):
+    def train_model(self, X_train, y_train, epochs_unsup=50, epochs_sup=50, learn_rate=0.01):
         X_train = np.asarray(X_train)
         y_train = np.asarray(y_train).astype(np.int8)
-        epochs = int(epochs)
+        epochs_unsup = int(epochs_unsup)
+        epochs_sup = int(epochs_sup)
 
         # Train the LVQ
         self.model.fit(X_train, y_train, weights_init = "pca", labels_init = None,
-            unsup_num_iters = epochs, unsup_batch_size = self.batch_size,
-            sup_num_iters = epochs, sup_batch_size = self.batch_size,
+            unsup_num_iters = epochs_unsup, unsup_batch_size = self.batch_size,
+            sup_num_iters = epochs_sup, sup_batch_size = self.batch_size,
             neighborhood = "gaussian",
             learning_rate = learn_rate, learning_decay_rate = 1, learning_rate_decay_function = None,
             sigma = 1, sigma_decay_rate = 1, sigma_decay_function = None,
@@ -76,9 +76,11 @@ class Network:
 
     def predict(self, X_valid, y_valid=None):
         X_valid = np.asarray(X_valid)
+
         # Predict the result
         y_pred = self.model.predict(X_valid)
         y_pred = self.encoder.inverse_transform(y_pred)
+
         if y_valid is not None:
             y_valid = np.asarray(y_valid)
             # Make confusion matrix
@@ -86,8 +88,17 @@ class Network:
             # Print the confusion matrix
             print(cm)
             print('Accuracy:', accuracy_score(y_valid, y_pred))
+
         y_pred = np.array(y_pred)
         return y_pred
+
+    def get_data(self):
+        weights = self.model._competitive_layer_weights
+        labels = self.model._nodes_label
+
+        weights = np.array(weights)
+        labels = np.array(labels)
+        return weights, labels
 
     def plot(self):
         # Plot
