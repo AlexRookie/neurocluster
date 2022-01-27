@@ -34,35 +34,32 @@ py.importlib.reload(pymodule);
 % Load dataset
 %myTrajectories = load_dataset(dataset, num_points, options);
 
-%load('data.mat');
+load('data.mat');
 
-%{
-X = [];
-y = [];
-for i = 1:200
-    X = [X; ones(1,30)*2];
-    y = [y; 0];
-end
-for i = 1:200
-    X = [X; ones(1,30)*5];
-    y = [y; 1];
-end
-for i = 1:200
-    X = [X; ones(1,30)*9];
-    y = [y; 2];
-end
-%}
+% X = [], y = [];
+% for i = 1:200
+%     X = [X; ones(1,30)*2];
+%     y = [y; 0];
+% end
+% for i = 1:200
+%     X = [X; ones(1,30)*5];
+%     y = [y; 1];
+% end
+% for i = 1:200
+%     X = [X; ones(1,30)*9];
+%     y = [y; 2];
+% end
 
 positions = [6, 10, 0.0, 12, 16,  pi/2;
              6, 10, 0.0, 12,  4, -pi/2;
              6, 10, 0.0, 16, 10,   0.0];
 
+%{
 Xx = [];
 Xy = [];
 Xtheta = [];
 Xkappa = [];
 y = [];
-encoding = [];
 l = 1;
 
 for i = 1:num_classes
@@ -87,7 +84,7 @@ for i = 1:num_classes
             Xy(l,:) = myTrajectories.y{k}(j:j+(window-1));
             Xtheta(l,:) = myTrajectories.theta{k}(j:j+(window-1));
             Xkappa(l,:) = myTrajectories.dtheta{k}(j:j+(window-1)); %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
-            y(l,1) = i;
+            y(l,1) = i-1;
             l = l+1;
         end
     end
@@ -106,19 +103,11 @@ hold on, grid on, box on, axis equal;
 xlabel('x (m)');
 xlabel('y (m)');
 title('Dataset');
-plot(samples_x', samples_y');
+plot(Xx, Xy);
+%}
 
 % Prepare data
-X = [];
-y = [];
-k = 1;
-for i = 1:size(samples_x,1)
-    for j = 1:num_points-(window-1)
-         X(k,:) = samples_theta(i,j:j+(window-1)); %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
-         y(k,1) = encoding(i);
-         k = k+1;
-    end
-end
+X = [Xx-Xx(:,1), Xy-Xy(:,1), Xkappa];
 
 % Shift trajectories to origin
 %shift_samples = samples - samples(:,:,1);
@@ -157,10 +146,15 @@ y_valid = double(data{4});
 %%
 
 % Train network
-model = pynet.train_model(X_train, y_train', epochs, learn_rate);
+model = pynet.train_model(X_train, y_train, epochs, learn_rate);
+
+%%
 
 y_pred = pynet.predict(X_valid, y_valid);
 y_pred = double(y_pred);
+
+% Plot confusion matrix
+confusion_matrix(y_valid, y_pred);
 
 %% SOM
 
