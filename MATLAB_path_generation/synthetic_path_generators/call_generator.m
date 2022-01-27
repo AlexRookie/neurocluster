@@ -1,4 +1,4 @@
-function samples = call_generators(generator, map_name, num_traj, num_points, options)
+function samples = call_generator(generator, map_name, positions, num_traj, num_points, options)
 
 res = 10;        % occupancy map resolution
 inflation = 0.2; % obstacles inflation (meters)
@@ -126,28 +126,20 @@ xlim(x_lim);
 ylim(y_lim);
 hold on;
 
-% Get position 1
-[obj_pos.x1, obj_pos.y1] = ginput(1);
-while  checkOccupancy(map,[obj_pos.x1, obj_pos.y1])
-    [obj_pos.x1, obj_pos.y1] = ginput(1);
-end
+% Read position and angle 1
+obj_pos.x1 = positions(1);
+obj_pos.y1 = positions(2);
+obj_pos.a1 = positions(3);
 plot(obj_pos.x1, obj_pos.y1, 'xk', 'LineStyle', 'none');
-drawnow;
-% Get angle 1
-[x, y] = ginput(1);
-obj_pos.a1 = atan2((y - obj_pos.y1), (x - obj_pos.x1));
 quiver( obj_pos.x1, obj_pos.y1, l_vec*cos(obj_pos.a1), l_vec*sin(obj_pos.a1), 'Color', 'r' );
-% Get position 2
-[obj_pos.x2, obj_pos.y2] = ginput(1);
-while  checkOccupancy(map,[obj_pos.x2, obj_pos.y2])
-    [obj_pos.x2, obj_pos.y2] = ginput(1);
-end
-plot(obj_pos.x2, obj_pos.y2, 'xr', 'LineStyle', 'none');
 drawnow;
-% Get angle 2
-[x, y] = ginput(1);
-obj_pos.a2 = atan2((y - obj_pos.y2), (x - obj_pos.x2));
+% Getposition and angle 2
+obj_pos.x2 = positions(4);
+obj_pos.y2 = positions(5);
+obj_pos.a2 = positions(6);
+plot(obj_pos.x2, obj_pos.y2, 'xr', 'LineStyle', 'none');
 quiver( obj_pos.x2, obj_pos.y2, l_vec*cos(obj_pos.a2), l_vec*sin(obj_pos.a2), 'Color', 'r' );
+drawnow;
 
 % Inflate occupancy map
 map_res = copy(map);

@@ -8,7 +8,7 @@ num_points  = 150;                       % MINIMUM number of points
 num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'void';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
-window = 10;
+window = 20;
 
 %dataset = 'edinburgh_10Sep';
 
@@ -34,18 +34,45 @@ py.importlib.reload(pymodule);
 % Load dataset
 %myTrajectories = load_dataset(dataset, num_points, options);
 
-load('data.mat');
+%load('data.mat');
 
 %{
-samples_x = [];
-samples_y = [];
-samples_theta = [];
+X = [];
+y = [];
+for i = 1:200
+    X = [X; ones(1,30)*2];
+    y = [y; 0];
+end
+for i = 1:200
+    X = [X; ones(1,30)*5];
+    y = [y; 1];
+end
+for i = 1:200
+    X = [X; ones(1,30)*9];
+    y = [y; 2];
+end
+%}
+
+positions = [6, 10, 0.0, 12, 16,  pi/2;
+             6, 10, 0.0, 12,  4, -pi/2;
+             6, 10, 0.0, 16, 10,   0.0];
+
+Xx = [];
+Xy = [];
+Xtheta = [];
+Xkappa = [];
+y = [];
 encoding = [];
+l = 1;
 
 for i = 1:num_classes
     % Call path generator
-    myTrajectories = call_generators(generator, map, num_traj, num_points, options);
+    %myTrajectories = call_generator_manual(generator, map, num_traj, num_points, options);
+    pos_1 = [6, 10, 0.0];
+    pos_2 = [12, 16, pi/2];
+    myTrajectories = call_generator(generator, map, positions(i,:), num_traj, num_points, options);
     
+    %fig2 = trajectories_visualizer(myTrajectories);
     %figure(101);
     %hold on, grid on, box on, axis equal;
     %xlabel('x (m)');
@@ -54,14 +81,23 @@ for i = 1:num_classes
     %cellfun(@plot, myTrajectories.x, myTrajectories.y);
     
     % Extract samples
-    if min(cellfun(@length, myTrajectories.x)) < num_points
-        error("Not enough points for the trajectories.");
+    for k = 1:num_traj
+        for j = 1:length(myTrajectories.s{k})-(window-1)
+            Xx(l,:) = myTrajectories.x{k}(j:j+(window-1));
+            Xy(l,:) = myTrajectories.y{k}(j:j+(window-1));
+            Xtheta(l,:) = myTrajectories.theta{k}(j:j+(window-1));
+            Xkappa(l,:) = myTrajectories.dtheta{k}(j:j+(window-1)); %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
+            y(l,1) = i;
+            l = l+1;
+        end
     end
-    samples_x = [samples_x; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.x, 'UniformOutput', false)')];
-    samples_y = [samples_y; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.y, 'UniformOutput', false)')];
-    samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
-    
-    encoding = [encoding; ones(num_traj,1)*(i-1)];
+    %if min(cellfun(@length, myTrajectories.x)) < num_points
+    %    error("Not enough points for the trajectories.");
+    %end
+    %samples_x = [samples_x; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.x, 'UniformOutput', false)')];
+    %samples_y = [samples_y; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.y, 'UniformOutput', false)')];
+    %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
+    %encoding = [encoding; ones(num_traj,1)*(i-1)];
 end
 
 % Plot dataset
@@ -78,7 +114,7 @@ y = [];
 k = 1;
 for i = 1:size(samples_x,1)
     for j = 1:num_points-(window-1)
-         X(k,:) = [samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
+         X(k,:) = samples_theta(i,j:j+(window-1)); %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
          y(k,1) = encoding(i);
          k = k+1;
     end
@@ -90,13 +126,12 @@ end
 %norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
 % Denormalise samples
 % denorm_samples = norm_samples.*(max(samples,[],3)-min(samples,[],3)) + min(samples,[],3);
-%}
 
 %% Train network
 
-epochs = 200;
-batch  = 128;
-learn_rate = 0.005;
+epochs = 500;
+batch  = 32;
+learn_rate = 0.05;
 som_size = [10, 10];
 
 % Initialize network and load Keras model
@@ -122,7 +157,7 @@ y_valid = double(data{4});
 %%
 
 % Train network
-model = pynet.train_model(X_train, y_train, epochs, learn_rate);
+model = pynet.train_model(X_train, y_train', epochs, learn_rate);
 
 y_pred = pynet.predict(X_valid, y_valid);
 y_pred = double(y_pred);

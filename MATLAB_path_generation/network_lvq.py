@@ -74,17 +74,18 @@ class Network:
             conscience = False, verbose = 1)
         return self.model
 
-    def predict(self, X_valid, y_valid):
+    def predict(self, X_valid, y_valid=None):
         X_valid = np.asarray(X_valid)
-        y_valid = np.asarray(y_valid)
         # Predict the result
         y_pred = self.model.predict(X_valid)
         y_pred = self.encoder.inverse_transform(y_pred)
-        # Make confusion matrix
-        cm = confusion_matrix(y_valid, y_pred)
-        # Print the confusion matrix
-        print(cm)
-        print('Accuracy:', accuracy_score(y_valid, y_pred))
+        if y_valid is not None:
+            y_valid = np.asarray(y_valid)
+            # Make confusion matrix
+            cm = confusion_matrix(y_valid, y_pred)
+            # Print the confusion matrix
+            print(cm)
+            print('Accuracy:', accuracy_score(y_valid, y_pred))
         y_pred = np.array(y_pred)
         return y_pred
 
