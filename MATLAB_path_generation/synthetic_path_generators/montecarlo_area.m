@@ -13,7 +13,7 @@ function area = montecarlo_area(obstacles, pos)
         end
     end
     plot(area.c1, 'FaceColor', 'r');
-    area.c2 = nsidedpoly(100, 'Center', [pos.x2 pos.y2], 'Radius', 0.2);
+    area.c2 = nsidedpoly(100, 'Center', [pos.x2 pos.y2], 'Radius', 1);
     for i = 1:length(obstacles)
         area_obs = polyshape(obstacles{i,1}');
         if not(isinterior(area_obs, pos.x2, pos.y2))
