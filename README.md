@@ -13,4 +13,4 @@ Synthetic autoclustering planner.
 - Matplotlib >= 3.4.3
 
 ### External libraries
-The Clothoids library is taken from [here](https://github.com/ebertolazzi/Clothoids).
+The Clothoids library is taken from [here](https://github.com/ebertolazzi/Clothoids), the SOM-LVQ library from [here](https://github.com/KienMN/Modified-SOM).
