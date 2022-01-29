@@ -18,7 +18,7 @@ som_size = [10, 10];
 
 %dataset = 'edinburgh_10Sep';
 
-options.save = false;
+options.save = true;
 options.plot = true;
 
 %-------------------------------------------------------------------------%
@@ -165,6 +165,7 @@ confusion_matrix(y_valid, y_pred);
 data = pynet.get_data();
 weights = double(data{1});
 labels = double(data{2});
+bias = double(data{3});
 
 % Get label vector
 reshape(labels,10,10)
@@ -180,6 +181,16 @@ for k = 1:som_size(1)*som_size(2)
     set(gca,'visible','off');
     drawnow;
 end
+
+if options.save
+    save('matlab.mat', 'weights','labels','bias');
+end
+
+%net1 = pymodule.Network();
+%net1.define_model(som_size);
+%net1.predict(X_valid, y_valid);
+%net1.load_data(weights, labels, bias);
+%net1.predict(X_valid, y_valid);
 
 %% SOM
 

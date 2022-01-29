@@ -95,22 +95,34 @@ class Network:
     def get_data(self):
         weights = self.model._competitive_layer_weights
         labels = self.model._nodes_label
+        bias = self.model._bias
 
         weights = np.array(weights)
         labels = np.array(labels)
-        return weights, labels
+        bias = np.array(bias)
+        return weights, labels, bias
 
-    def plot(self):
-        # Plot
-        som_weights = self.model.get_layer(name='SOM').get_weights()[0]
-        
-        fig1, axes = plt.subplots(nrows=self.map_size[0], ncols=self.map_size[1], figsize=(10, 10))
-        for k in range(self.map_size[0] * self.map_size[1]):
-           axes[k // self.map_size[1]][k % self.map_size[1]].imshow(som_weights[k].reshape(2, self.units), cmap='gray')
-           axes[k // self.map_size[1]][k % self.map_size[1]].axis('off')
-        plt.subplots_adjust(hspace=0.05, wspace=0.05)
-        
-        plt.draw() # non-blocking plot
-        plt.pause(0.1)
+    def load_data(self, weights=None, labels=None, bias=None):
+        weights = np.asarray(weights)
+        labels = np.asarray(labels)
+        bias = np.asarray(bias)
+
+        self.model._competitive_layer_weights = weights
+        self.model._nodes_label = labels
+        self.model._bias = bias
+        return
+
+    #def plot(self):
+    #    # Plot
+    #    som_weights = self.model.get_layer(name='SOM').get_weights()[0]
+    #    
+    #    fig1, axes = plt.subplots(nrows=self.map_size[0], ncols=self.map_size[1], figsize=(10, 10))
+    #    for k in range(self.map_size[0] * self.map_size[1]):
+    #       axes[k // self.map_size[1]][k % self.map_size[1]].imshow(som_weights[k].reshape(2, self.units), cmap='gray')
+    #       axes[k // self.map_size[1]][k % self.map_size[1]].axis('off')
+    #    plt.subplots_adjust(hspace=0.05, wspace=0.05)
+    #    
+    #    plt.draw() # non-blocking plot
+    #    plt.pause(0.1)
 
 #=======================================================================================#
