@@ -1,10 +1,10 @@
-function samples = clothoids_PRM_montecarlo(num_traj, num_points, obj_pos, obj_map, options)
+function samples = clothoids_PRM_montecarlo(num_traj, step, obj_pos, obj_map, options)
 
 obstacles = obj_map.obstacles;
 %res = obj_map.res;
 map_res = obj_map.map_res;
 
-step = 0.05; % sampling step (cm)
+%step = 0.05; % sampling step (cm)
 
 l_vec = 0.5; % orientation angle length (for plot)
 
@@ -37,6 +37,7 @@ for i = 1:num_traj
     end
     
     prm = mobileRobotPRM(map_res, 100);
+    show(prm)
  
     % Generate starting/ending points and angles randomly inside the valid area
     in=0;
@@ -114,9 +115,9 @@ for i = 1:num_traj
     % Get data
     L = SL.length();
     samples.s{i} = 0:step:L;
-    if length(samples.s{i}) < num_points
-        error('Too few points for trajectory number %d.', i);
-    end
+    %if length(samples.s{i}) < num_points
+    %    error('Too few points for trajectory number %d.', i);
+    %end
     [samples.x{i}, samples.y{i}, samples.theta{i}, samples.kappa{i}] = SL.evaluate(samples.s{i});
     [samples.dx{i}, samples.dy{i}] = SL.eval_D(samples.s{i});
     [samples.ddx{i}, samples.ddy{i}] = SL.eval_DD(samples.s{i});
