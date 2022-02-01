@@ -1,4 +1,4 @@
-function fig = trajectories_visualizer(traj)
+function fig = trajectory_features_plot(traj)
 
 % Plot
 fig = figure(2);
