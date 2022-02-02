@@ -1,3 +1,7 @@
-*.pyc
-*.asv
-MATLAB_path_generation/__pycache__/
+MATLAB_path_generation/datasets/edinburgh*
+MATLAB_path_generation/datasets/thor*
+MATLAB_path_generation/datasets/povo/povo*
+MATLAB_path_generation/datasets/povo/logs
+MATLAB_path_generation/datasets/povo/maps
+/test
+/results
