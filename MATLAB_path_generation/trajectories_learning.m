@@ -134,7 +134,7 @@ save('data_appo.mat', 'X','y');
 
 %% Network
 
-% Initialize network and load Keras model
+% Initialize Keras class
 pynet = pymodule.Network();
 
 % Define neural network model
