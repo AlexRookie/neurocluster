@@ -1,47 +1,35 @@
 import tensorflow as tf
 #from tensorflow import keras
-#from tensorflow.keras import backend as K
+from tensorflow.keras import backend as K
 import numpy as np
-#import matplotlib.pyplot as plt
-from time import sleep
+import matplotlib.pyplot as plt
 
 class Network:
-    def __init__(self):
-        self.model = []
-        self.map_size = None
-        self.units    = None
-        self.classes  = None
-        self.epochs     = None
-        self.batch_size = None
-        self.l_rate     = None
-
-    def define_model(self, map_size=(10,10), units=2, classes=0):
+    def __init__(self, map_size=(10,10), epochs=50, batch=32, learn_rate=0.0001):
         self.map_size = np.asarray(map_size).astype(int)
-        self.units = np.asarray(units).astype(int)
-        self.classes = np.asarray(classes).astype(int)
+        self.epochs = int(epochs)
+        self.batch_size = int(batch)
+        self.l_rate = learn_rate
+        self.model = []
 
-        inputs = tf.keras.layers.Input(shape=(self.units, ), name='input') #X_train.shape[-1]
-        som_layer = SOMLayer(map_size=self.map_size, name='SOM')(inputs)
-        #self.model = tf.keras.models.Model(inputs=inputs, outputs=som_layer)
-        outputs = tf.keras.layers.Dense(units=self.classes, activation='softmax', name='classifier')(som_layer)
-        self.model = tf.keras.models.Model(inputs=inputs, outputs=[som_layer, outputs])
+    def rmse(self, y_true, y_pred):
+        # Root mean squared error (rmse) for regression
+        return K.sqrt(K.mean(K.square(y_pred - y_true)))
+
+    def define_model(self, units):
+        self.units = np.asarray(units).astype(int)
+
+        inputs = tf.keras.layers.Input(shape=(2, self.units, ), name='input') #X_train.shape[-1]
+        flatten = tf.keras.layers.Flatten()(inputs)
+        som_layer = SOMLayer(map_size=self.map_size, name='SOM')(flatten)
+        self.model = tf.keras.models.Model(inputs=inputs, outputs=som_layer)
 
         return self.model
 
-    def prepare_data(self, x, y=None, training_percentage=70, batch=32, randomize=True):
-        x = np.asarray(x)
-        y = np.asarray(y)
-        self.batch_size = int(batch)
+    def prepare_data(self, data, training_percentage=70):
+        data = np.asarray(data)
 
-        # One hot encode
-        y = tf.keras.utils.to_categorical(y)
-
-        if randomize:
-            perm = np.random.permutation(x.shape[0])
-            x = x[perm,:]
-            y = y[perm,:]
-
-        num_of_samples = x.shape[0]
+        num_of_samples = data.shape[0]
         train = int(training_percentage*num_of_samples/100)
         valid = num_of_samples-train
 
@@ -53,17 +41,17 @@ class Network:
             valid = num_of_samples-train
             valid = int(valid/self.batch_size) * self.batch_size
 
-        x_train = x[0:train, :]
-        x_valid = x[train:train+valid, :]
-        y_train = y[0:train, :]
-        y_valid = y[train:train+valid, :]
+        x_train = data[0:train, :, :]
+        #y_train = data[0:train, :, -10:]
+        x_valid = data[train:train+valid, :, :]
+        #y_valid = data[train:train+valid, :, -10:]
 
         self.x_train = np.array(x_train)
+        #self.y_train = np.array(y_train)
         self.x_valid = np.array(x_valid)
-        self.y_train = np.array(y_train)
-        self.y_valid = np.array(y_valid)
+        #self.y_valid = np.array(y_valid)
 
-        return self.x_train, self.x_valid, self.y_train, self.y_valid
+        return self.x_train, self.x_valid
 
     def kmeans_loss(self, y_pred, distances):
         """
@@ -104,7 +92,7 @@ class Network:
         elif neighborhood == 'window':
             return (d <= T).astype(np.float32)
 
-    def som_fit(self, x_train, y_train=None, decay='exponential'):
+    def som_fit(self, x_train, y_train=None, x_val=None, y_val=None, decay='exponential'):
         """
         Training procedure
         # Arguments
@@ -118,62 +106,80 @@ class Network:
         """
         
         x_train = np.asarray(x_train)
-        y_train = np.asarray(y_train)
 
         Tmax = 10  # initial temperature parameter
         Tmin = 0.1 # final temperature parameter
-        som_epochs = self.epochs # Number of epochs where SOM neighborhood is decreased
-
-        eval_interval = 10 # Evaluate metrics on training/validation batch every eval_interval epochs
+    
+        # Number of epochs where SOM neighborhood is decreased
+        som_epochs = self.epochs
+    
+        # Evaluate metrics on training/validation batch every eval_interval epochs
+        eval_interval = 10
     
         # Set and compute some initial values
         index = 0
+        if x_val is not None:
+            index_val = 0
         T = Tmax
     
-        for it in range(self.epochs):
+        for ite in range(self.epochs):
             # Get training and validation batches
-            #x_batch = np.expand_dims(x_train[index], axis=0)
-            #y_batch = np.expand_dims(y_train[index], axis=0)
+            x_batch = np.expand_dims(x_train[index], axis=0)
             if (index + 1) * self.batch_size >= x_train.shape[0]:
-                x_batch = x_train[index * self.batch_size::]
-                if y_train is not None:
-                    y_batch = y_train[index * self.batch_size::]
+                #x_batch = x_train[index * self.batch_size::]
+                #if y_train is not None:
+                #    y_batch = y_train[index * batch_size::]
                 index = 0
             else:
-                x_batch = x_train[index * self.batch_size:(index + 1) * self.batch_size]
-                if y_train is not None:
-                    y_batch = y_train[index * self.batch_size:(index + 1) * self.batch_size]
+                #x_batch = x_train[index * self.batch_size:(index + 1) * self.batch_size]
+                #if y_train is not None:
+                #    y_batch = y_train[index * batch_size:(index + 1) * batch_size]
                 index += 1
+            #if x_val is not None:
+            #    if (index_val + 1) * batch_size > x_val.shape[0]:
+            #        x_val_batch = x_val[index_val * batch_size::]
+            #        if y_val is not None:
+            #            y_val_batch = y_val[index_val * batch_size::]
+            #        index_val = 0
+            #    else:
+            #        x_val_batch = x_val[index_val * batch_size:(index_val + 1) * batch_size]
+            #        if y_val is not None:
+            #            y_val_batch = y_val[index_val * batch_size:(index_val + 1) * batch_size]
+            #        index_val += 1
     
             # Compute cluster assignments for batches
-            d, _ = self.model.predict(x_batch)
+            d = self.model.predict(x_batch)
             y_pred = d.argmin(axis=1)
+            #if x_val is not None:
+            #    d_val = self.model.predict([x_val_batch])
+            #    y_val_pred = d_val.argmin(axis=1)
     
             # Update temperature parameter
-            if it < som_epochs:
+            if ite < som_epochs:
                 if decay == 'exponential':
-                    T = Tmax*(Tmin/Tmax)**(it/(som_epochs-1))
+                    T = Tmax*(Tmin/Tmax)**(ite/(som_epochs-1))
                 elif decay == 'linear':
-                    T = Tmax - (Tmax-Tmin)*(it/(som_epochs-1))
+                    T = Tmax - (Tmax-Tmin)*(ite/(som_epochs-1))
     
             # Compute topographic weights batches
             w_batch = self.neighborhood_function(self.map_dist(y_pred, self.map_size), T, neighborhood='gaussian')
-
+            #if x_val is not None:
+            #    w_val_batch = neighborhood_function(map_dist(y_val_pred, map_size), T, neighborhood='gaussian')
+    
             # Train on batch
-            loss = self.model.train_on_batch(x_batch, [w_batch, y_batch]) # loss: ['loss', 'SOM_loss', 'classifier_loss', 'SOM_accuracy', 'classifier_accuracy']
-
-            if it % eval_interval == 0:
+            loss = self.model.train_on_batch(x_batch, w_batch)
+    
+            if ite % eval_interval == 0:
                 # Evaluate losses and metrics
-                Lsom = loss[1]
+                Lsom = loss
                 Lkm  = self.kmeans_loss(y_pred, d)
-                Ltop = loss[1] - self.kmeans_loss(y_pred, d)
+                Ltop = loss - self.kmeans_loss(y_pred, d)
                 #quantization_err = quantization_error(d)
                 #topographic_err  = topographic_error(d, map_size)
     
-                print('iteration {} - T={}'.format(it, T))
+                print('iteration {} - T={}'.format(ite, T))
                 print('[Train] - Lsom={:f} (Lkm={:f}/Ltop={:f})'.format(Lsom, Lkm, Ltop))
                 #print('[Train] - Quantization err={:f} / Topographic err={:f}'.format(quantization_err, topographic_err))
-                sleep(0.2)
     
         return self.model
 
@@ -188,58 +194,33 @@ class Network:
         """
         return tf.reduce_mean(tf.reduce_sum(weights*distances, axis=1))
 
-    def rmse(self, y_true, y_pred):
-        # Root mean squared error (rmse) for regression
-        return tf.keras.backend.sqrt(tf.keras.backend.mean(tf.keras.backend.square(y_pred - y_true)))
-
-    def train_model(self, x_train, y_train=None, epochs=50, learn_rate=0.01):
-        x_train = np.asarray(x_train)
-        y_train = np.asarray(y_train).astype(np.int8)
-        self.epochs = int(epochs)
-        self.l_rate = learn_rate
-
-        # Compile model
-        #self.model.compile(optimizer='adam', loss=self.som_loss)    #, metrics=[self.rmse])
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy']) #keras.optimizers.Adam(1e-3)
-        
-        # Train model
-        self.model = self.som_fit(x_train, y_train)
-        return self.model
-
-    def predict(self, inputs):
+    def train_model(self, inputs):
         inputs = np.asarray(inputs)
-        if len(inputs.shape)==1:
-            inputs = np.expand_dims(inputs, axis=0)
-        # Predict
-        som_pred, pred = self.model(inputs) # == model.predict([inputs])
-        #pred = np.argmin(pred)
-        #y_classes = pred.argmax(axis=-1)
-        return som_pred, pred
+        # Compile model 
+        self.model.compile(optimizer='adam', loss='mse')
+        # Train model
+        self.model = self.som_fit(inputs)
 
-    def save(self, file):
-        self.model.save_weights(file+'_weights.h5')
-        self.model.save(file+'.h5')
-
-    def load_model(self, file):
-        self.model.load(file+'.h5')
         return self.model
 
-    def load_weights(self, file):
-        self.model.load_weights(file+'_weights.h5')
-        return self.model
+    def predict(self, model, inputs):
+        inputs = np.asarray(inputs)
+        pred = model(inputs) # == model.predict([inputs])
+        pred = np.argmin(pred)
+        return pred
 
-    #def plot(self):
-    #    # Plot
-    #    som_weights = self.model.get_layer(name='SOM').get_weights()[0]
-    #    
-    #    fig1, axes = plt.subplots(nrows=self.map_size[0], ncols=self.map_size[1], figsize=(10, 10))
-    #    for k in range(self.map_size[0] * self.map_size[1]):
-    #       axes[k // self.map_size[1]][k % self.map_size[1]].imshow(som_weights[k].reshape(2, self.units), cmap='gray')
-    #       axes[k // self.map_size[1]][k % self.map_size[1]].axis('off')
-    #    plt.subplots_adjust(hspace=0.05, wspace=0.05)
-    #    
-    #    plt.draw() # non-blocking plot
-    #    plt.pause(0.1)
+    def plot(self):
+        # Plot
+        som_weights = self.model.get_layer(name='SOM').get_weights()[0]
+        
+        fig1, axes = plt.subplots(nrows=self.map_size[0], ncols=self.map_size[1], figsize=(10, 10))
+        for k in range(self.map_size[0] * self.map_size[1]):
+           axes[k // self.map_size[1]][k % self.map_size[1]].imshow(som_weights[k].reshape(2, self.units), cmap='gray')
+           axes[k // self.map_size[1]][k % self.map_size[1]].axis('off')
+        plt.subplots_adjust(hspace=0.05, wspace=0.05)
+        
+        plt.draw() # non-blocking plot
+        plt.pause(0.1)
 
 #=======================================================================================#
 

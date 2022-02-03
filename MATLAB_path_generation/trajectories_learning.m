@@ -1,19 +1,23 @@
 close all;
+clear all;
 clear classes;
 clc;
 
 % Parameters
 num_traj    = 50;                        % number of trajectories
-num_points  = 100;                       % MINIMUM number of points
+step        = 0.08;                      % sampling step (cm)
+window      = 20;
 num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'cross';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
-window = 20;
 
-epochs_unsup = 300;
-epochs_sup   = 200;
+%num_points  = 100;                       % MINIMUM number of points
+
+neural_model = 'network_som2';
+epochs = 500;
+%epochs_sup   = 1;
 batch = 64;
-learn_rate = 0.05;
+learn_rate = 0.0001;
 som_size = [10, 10];
 
 %dataset = 'edinburgh_10Sep';
@@ -32,7 +36,7 @@ addpath(genpath('./datasets/'));
 colors = customColors;
 
 % Import python module
-pymodule = py.importlib.import_module('network_lvq');
+pymodule = py.importlib.import_module(neural_model);
 py.importlib.reload(pymodule);
 
 %% Generate data
@@ -58,28 +62,25 @@ if strcmp(map, 'void')
     positions = [6, 10, 0.0, 12, 16,  pi/2;
                  6, 10, 0.0, 12,  4, -pi/2;
                  6, 10, 0.0, 16, 10,   0.0];
+    classes = [0, 1, 2];
 elseif strcmp(map, 'cross')
     positions = [5, 10, 0.0, 10, 15,  pi/2;
                  5, 10, 0.0, 10,  5, -pi/2;
                  5, 10, 0.0, 17, 10,   0.0];
+    classes = [0, 1, 2];
 end
 
-load('data_cross2.mat');
+load('data_appo.mat');
 
 %{
-Xx = [];
-Xy = [];
-Xtheta = [];
-Xkappa = [];
+X = [];
 y = [];
 l = 1;
-
 for i = 1:num_classes
     % Call path generator
-    %myTrajectories = call_generator_manual(generator, map, num_traj, num_points, options);
-    myTrajectories = call_generator(generator, map, positions(i,:), num_traj, num_points, options);
+    %myTrajectories = call_generator_manual(generator, map, num_traj, step, options);
+    myTrajectories = call_generator(generator, map, positions(i,:), num_traj, step, options);
     
-    %fig2 = trajectories_visualizer(myTrajectories);
     %figure(101);
     %hold on, grid on, box on, axis equal;
     %xlabel('x (m)');
@@ -87,14 +88,19 @@ for i = 1:num_classes
     %title('Dataset');
     %cellfun(@plot, myTrajectories.x, myTrajectories.y);
     
+    %fig2 = trajectory_features_plot(myTrajectories);
+    
     % Extract samples
     for k = 1:num_traj
-        for j = 1:length(myTrajectories.s{k})-(window-1)
-            Xx(l,:) = myTrajectories.x{k}(j:j+(window-1));
-            Xy(l,:) = myTrajectories.y{k}(j:j+(window-1));
-            Xtheta(l,:) = myTrajectories.theta{k}(j:j+(window-1));
-            Xkappa(l,:) = myTrajectories.dtheta{k}(j:j+(window-1)); %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
-            y(l,1) = i-1;
+        for j = 1:length(myTrajectories.s{k})-(window+1)
+            Xx = myTrajectories.x{k}(j:j+(window-1)) - myTrajectories.x{k}(j); % shift x and y
+            Xy = myTrajectories.y{k}(j:j+(window-1)) - myTrajectories.y{k}(j);
+            Xtheta = myTrajectories.theta{k}(j:j+(window-1));
+            Xkappa = myTrajectories.dtheta{k}(j:j+(window-1));
+            %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
+            
+            X(l,:) = [Xx, Xy, Xtheta, Xkappa];
+            y(l,1) = classes(i);
             l = l+1;
         end
     end
@@ -106,18 +112,18 @@ for i = 1:num_classes
     %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
     %encoding = [encoding; ones(num_traj,1)*(i-1)];
 end
+save('data_appo.mat', 'X','y');
 %}
 
 % Plot dataset
-figure(1);
-hold on, grid on, box on, axis equal;
-xlabel('x (m)');
-xlabel('y (m)');
-title('Dataset');
-plot(Xx, Xy);
-
-% Prepare data
-X = [Xx-Xx(:,1), Xy-Xy(:,1), Xkappa];
+% figure(1);
+% hold on, grid on, box on, axis equal;
+% xlabel('x (m)');
+% xlabel('y (m)');
+% title('Dataset');
+% for i = 1:size(X,1)
+%     plot(X(i,1:window), X(i,window+1:window+window));
+% end
 
 % Shift trajectories to origin
 %shift_samples = samples - samples(:,:,1);
@@ -126,37 +132,128 @@ X = [Xx-Xx(:,1), Xy-Xy(:,1), Xkappa];
 % Denormalise samples
 % denorm_samples = norm_samples.*(max(samples,[],3)-min(samples,[],3)) + min(samples,[],3);
 
+%% Network
+
+% Initialize network and load Keras model
+pynet = pymodule.Network();
+
+% Define neural network model
+units = size(X,2);
+model = pynet.define_model(som_size, units, num_classes);
+
+% Load dataset
+samples = pynet.prepare_data(X, y, 80, batch, 1);
+x_train = double(samples{1});
+x_valid = double(samples{2});
+y_train = double(samples{3});
+y_valid = double(samples{4});
+
+%% Train network
+
+% Train
+model = pynet.train_model(x_train, y_train, epochs, learn_rate);
+% Load
+model = pynet.load_weights('model_appo');
+
+som_weights = double(model.get_layer('SOM').get_weights{1});
+
+% Plot
+% fig = figure(2);
+% tiledlayout(som_size(1), som_size(2), 'Padding', 'none', 'TileSpacing', 'compact');
+% for k = 1:som_size(1)*som_size(2)
+%     nexttile;
+%     hold on, axis equal, grid on, box on;
+%     ylim([min(min(som_weights)), max(max(som_weights))]);
+%     %set(gca,'visible','off');
+%     plot(som_weights(k,1:window), som_weights(k,window+1:window+window));
+%     drawnow;
+% end
+
+%% Inference
+
+% Predict
+pred = pynet.predict(x_valid);
+
+som_pred = double(pred{1});
+y_pred = double(pred{2});
+
+% Plot confusion matrix
+[~, Y_valid] = max(y_valid');
+[~, Y_pred] = max(y_pred');
+confusion_matrix(Y_valid, Y_pred);
+
+%% Save
+
+pynet.save('model_appo');
+
+
+
+
+
+
 %% LVQ network
 
 % Initialize network and load Keras model
-%pynet = pymodule.Network(epochs, batch, learn_rate);
 %pynet = pymodule.Network(som_size, epochs, batch, learn_rate);
 pynet = pymodule.Network();
 
 % Define neural network model
 pynet.define_model(som_size);
 
-% encoder = models{1}; encoder.summary();
-% decoder = models{2}; decoder.summary();
-% autoencoder = models{3};
-
 % Load dataset
 samples = pynet.prepare_data(X, y, 80, batch, 1);
 
-X_train = double(samples{1});
+x_train = double(samples{1});
 y_train = double(samples{2});
-X_valid = double(samples{3});
+x_valid = double(samples{3});
 y_valid = double(samples{4});
 
 %% Train network
 
 % Train
-model = pynet.train_model(X_train, y_train, epochs_unsup, epochs_sup, learn_rate);
+model = pynet.train_model(x_train, y_train, epochs, epochs_sup, learn_rate);
 
-%% Inference
+%% Inference SOM
+
+data = pynet.get_data();
+weights = double(data{1});
+bias = double(data{3});
+clus_labels = double(data{4});
+
+% Get label vector
+cl = reshape(clus_labels,10,10)
+
+% Plot som weights
+w = reshape(weights,10,10,[]);
+figure(60);
+tiledlayout(2, 2, 'Padding', 'none', 'TileSpacing', 'compact');
+[mesh_x,mesh_y] = meshgrid(0.5:1:10.5,0.5:1:10.5);
+for i = 1:4
+    nexttile;
+    hold on, axis equal, box on;
+    mesh_w = zeros(size(mesh_x));
+    mesh_w(1:10,1:10) = w(:,:,i);
+    surf(mesh_x, mesh_y, mesh_w);
+    for j = 1:10
+        for k = 1:10
+            text(j, k, 5, sprintf("%d",cl(j,k)));
+        end
+    end
+    view(0,90);
+end
 
 % Predict
-y_pred = pynet.predict(X_valid, y_valid);
+y_pred = pynet.predict(squeeze(x_valid(1,:,:)));
+y_pred = double(y_pred);
+
+y_pred = mode(y_pred')';
+
+% Plot confusion matrix
+confusion_matrix(y_valid, y_pred);
+
+%%
+
+y_pred = pynet.predict(x_valid, y_valid);
 y_pred = double(y_pred);
 
 % Plot confusion matrix
@@ -166,6 +263,7 @@ data = pynet.get_data();
 weights = double(data{1});
 labels = double(data{2});
 bias = double(data{3});
+clus_labels = double(data{4});
 
 % Get label vector
 reshape(labels,10,10)
@@ -265,6 +363,13 @@ vec2ind(a)'
 %% Autoencoder NN
 
 %{
+% Initialize network and load Keras model
+%pynet = pymodule.Network(epochs, batch, learn_rate);
+
+% encoder = models{1}; encoder.summary();
+% decoder = models{2}; decoder.summary();
+% autoencoder = models{3};
+
 % encoder = trained{1};
 % decoder = trained{2};
 % autoencoder = trained{3};
