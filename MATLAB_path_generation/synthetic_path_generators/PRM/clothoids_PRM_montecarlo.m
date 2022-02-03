@@ -37,8 +37,7 @@ for i = 1:num_traj
     end
     
     prm = mobileRobotPRM(map_res, 100);
-    show(prm)
- 
+
     % Generate starting/ending points and angles randomly inside the valid area
     in=0;
     while ~in
