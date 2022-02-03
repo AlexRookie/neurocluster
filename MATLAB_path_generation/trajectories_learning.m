@@ -7,14 +7,14 @@ clc;
 num_traj    = 50;                        % number of trajectories
 step        = 0.08;                      % sampling step (cm)
 window      = 20;
-num_classes = 3;                         % number of classes
+num_classes = 12;                        % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'cross';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
 
 %num_points  = 100;                       % MINIMUM number of points
 
-neural_model = 'network_som2';
-epochs = 500;
+neural_model = 'network_som';
+epochs = 1000;
 %epochs_sup   = 1;
 batch = 64;
 learn_rate = 0.0001;
@@ -64,22 +64,34 @@ if strcmp(map, 'void')
                  6, 10, 0.0, 16, 10,   0.0];
     classes = [0, 1, 2];
 elseif strcmp(map, 'cross')
-    positions = [5, 10, 0.0, 10, 15,  pi/2;
-                 5, 10, 0.0, 10,  5, -pi/2;
-                 5, 10, 0.0, 17, 10,   0.0];
-    classes = [0, 1, 2];
+    positions = [5,  10,  0.0,  10, 15,  pi/2;
+                 5,  10,  0.0,  10, 5,  -pi/2;
+                 5,  10,  0.0,  17, 10,  0.0;
+                 10, 5,   pi/2, 5,  10, -pi;
+                 10, 5,   pi/2, 15, 10,  0.0;
+                 10, 5,   pi/2, 10, 17,  pi/2;
+                 15, 10, -pi,   10, 5,  -pi/2;
+                 15, 10, -pi,   10, 15,  pi/2;
+                 15, 10, -pi,   3,  10, -pi;
+                 10, 15, -pi/2, 15, 10,  0.0;
+                 10, 15, -pi/2, 5,  10, -pi;
+                 10, 15, -pi/2, 10, 3,  -pi/2;
+                 ];
+    classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 end
 
-load('data_appo.mat');
+load('cross_data.mat');
 
 %{
+Data = cell(1,num_classes);
 X = [];
 y = [];
 l = 1;
 for i = 1:num_classes
     % Call path generator
     %myTrajectories = call_generator_manual(generator, map, num_traj, step, options);
-    myTrajectories = call_generator(generator, map, positions(i,:), num_traj, step, options);
+    trajectories = call_generator(generator, map, positions(i,:), num_traj, step, options);
+    Data{i} = trajectories;
     
     %figure(101);
     %hold on, grid on, box on, axis equal;
@@ -92,11 +104,11 @@ for i = 1:num_classes
     
     % Extract samples
     for k = 1:num_traj
-        for j = 1:length(myTrajectories.s{k})-(window+1)
-            Xx = myTrajectories.x{k}(j:j+(window-1)) - myTrajectories.x{k}(j); % shift x and y
-            Xy = myTrajectories.y{k}(j:j+(window-1)) - myTrajectories.y{k}(j);
-            Xtheta = myTrajectories.theta{k}(j:j+(window-1));
-            Xkappa = myTrajectories.dtheta{k}(j:j+(window-1));
+        for j = 1:length(trajectories.s{k})-(window+1)
+            Xx = trajectories.x{k}(j:j+(window-1)) - trajectories.x{k}(j); % shift x and y
+            Xy = trajectories.y{k}(j:j+(window-1)) - trajectories.y{k}(j);
+            Xtheta = trajectories.theta{k}(j:j+(window-1));
+            Xkappa = trajectories.dtheta{k}(j:j+(window-1));
             %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
             
             X(l,:) = [Xx, Xy, Xtheta, Xkappa];
@@ -110,9 +122,8 @@ for i = 1:num_classes
     %samples_x = [samples_x; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.x, 'UniformOutput', false)')];
     %samples_y = [samples_y; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.y, 'UniformOutput', false)')];
     %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
-    %encoding = [encoding; ones(num_traj,1)*(i-1)];
 end
-save('data_appo.mat', 'X','y');
+save('cross_data.mat', 'X','y','Data','map','generator','positions','classes');
 %}
 
 % Plot dataset
@@ -152,8 +163,9 @@ y_valid = double(samples{4});
 
 % Train
 model = pynet.train_model(x_train, y_train, epochs, learn_rate);
+
 % Load
-model = pynet.load_weights('model_appo');
+%model = pynet.load_weights('model_appo');
 
 som_weights = double(model.get_layer('SOM').get_weights{1});
 
@@ -184,14 +196,12 @@ confusion_matrix(Y_valid, Y_pred);
 
 %% Save
 
-pynet.save('model_appo');
-
-
-
-
+pynet.save('cross_model');
 
 
 %% LVQ network
+
+%{
 
 % Initialize network and load Keras model
 %pynet = pymodule.Network(som_size, epochs, batch, learn_rate);
@@ -289,6 +299,8 @@ end
 %net1.predict(X_valid, y_valid);
 %net1.load_data(weights, labels, bias);
 %net1.predict(X_valid, y_valid);
+
+%}
 
 %% SOM
 
