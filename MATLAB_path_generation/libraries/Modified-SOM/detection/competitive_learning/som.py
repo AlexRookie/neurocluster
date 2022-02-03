@@ -35,6 +35,7 @@ class SOM(CompetitiveNetwork):
     self._competitive_layer_weights = None
     self._n_batches = 0
     self._quantization_error = np.array([])
+    self.cluster_label = []
 
   def find_nearest_node(self, x):
     """Find nearest node (best matching unit) according to input vector x.
@@ -97,17 +98,20 @@ class SOM(CompetitiveNetwork):
       Return self.
     """
     n_samples = X.shape[0]
+    n_times   = X.shape[1]
     verbose = self._verbose
     for i in range(num_iters):
       np.random.seed(self._get_random_state())
       sample_idx = np.random.randint(0, n_samples)
       x = X[sample_idx]
       n_batches = self._n_batches + i // batch_size
+      #for j in range(n_times):
+      #  x_j = x[j]
       self.update(x = x, batch = n_batches)
       self._quantization_error = np.append(self._quantization_error, self.quantization_error(X))
       if verbose:
         print('Unsupervised learning iteration {}/{}: quantization error: {:.4f}'.format(i + 1, num_iters, self._quantization_error[-1]))
-        sleep(0.001)
+        sleep(0.1)
     self._n_batches += num_iters // batch_size + int(num_iters % batch_size != 0)
     return self
 
@@ -200,8 +204,8 @@ class SOM(CompetitiveNetwork):
     self : object
       Return self.
     """
-    if len(X.shape) != 2:
-      raise Exception("Dataset need to be 2 dimensions")
+    #if len(X.shape) != 2:
+    #  raise Exception("Dataset need to be 2 dimensions")
 
     if self._competitive_layer_weights is None:
       if weights_init in ['random','sample', 'pca']:
@@ -239,6 +243,7 @@ class SOM(CompetitiveNetwork):
       self._sigma_decay_function = default_sigma_decay_function
 
     self.unsup_fitting(X, num_iters, batch_size)
+    sleep(0.1)
 
     if num_clusters != 0:
       _, self.cluster_label, _ = k_means(self._competitive_layer_weights, 
@@ -249,7 +254,24 @@ class SOM(CompetitiveNetwork):
     return self
 
   def predict(self, X):
-    pred = np.array([self.cluster_label[self.find_nearest_node(x)] for x in X])
+    if len(X.shape)==2:
+      pred = np.array([self.cluster_label[self.find_nearest_node(x)] for x in X])
+    if len(X.shape)==3:
+      pred = []
+      for i in range(X.shape[0]):
+        pred.append([self.cluster_label[self.find_nearest_node(x)] for x in X[i]])
+      pred = np.array(pred)
+
+    return pred
+
+  def predict_som(self, X):
+    if len(X.shape)==2:
+      pred = np.array([self.find_nearest_node(x) for x in X])
+    if len(X.shape)==3:
+      pred = []
+      for i in range(X.shape[0]):
+        pred.append([self.find_nearest_node(x) for x in X[i]])
+      pred = np.array(pred)
 
     return pred
 
@@ -267,8 +289,11 @@ class SOM(CompetitiveNetwork):
     quantization_error : float
       Quantization error of the network according to the input data.
     """
-    if len(X.shape) != 2:
-      raise Exception("Dataset need to be 2 dimensions")
+    #if len(X.shape) != 2:
+    #  raise Exception("Dataset need to be 2 dimensions")
+    if len(X.shape) == 3:
+      X = X.reshape(X.shape[0]*X.shape[1], X.shape[2])
+
     error = 0
     for x in X:
       error += np.sqrt(np.sum((x - self._competitive_layer_weights[self.find_nearest_node(x)]) ** 2))
@@ -372,7 +397,7 @@ class CombineSomLvq(SOM):
       self._quantization_error = np.append(self._quantization_error, self.quantization_error(X))
       if verbose:
         print('Supervised learning iteration {}/{}: quantization error: {:.4f}'.format(i + 1, num_iters, self._quantization_error[-1]))
-        sleep(0.001)
+        sleep(0.01)
     self._n_batches += num_iters // batch_size + int(num_iters % batch_size != 0)
     return self
 

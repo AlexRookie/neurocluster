@@ -70,6 +70,8 @@ def weights_initialize(data, n_rows, n_cols, method='random', random_state=None)
     and n_features is the number of features.
   """
   n_nodes = n_rows * n_cols
+  if len(data.shape) == 3:
+    data = data.reshape(data.shape[0]*data.shape[1], data.shape[2])
   n_samples, n_features = data.shape
 
   if method not in ['random', 'sample', 'pca']:
