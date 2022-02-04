@@ -1,4 +1,4 @@
-function samples = clothoids_PRM_montecarlo(num_traj, step, obj_pos, obj_map, options)
+function samples = clothoids_PRM_montecarlo(num_traj, step, obj_pos, obj_map, randomize)
 
 obstacles = obj_map.obstacles;
 %res = obj_map.res;
@@ -7,6 +7,8 @@ map_res = obj_map.map_res;
 %step = 0.05; % sampling step (cm)
 
 l_vec = 0.5; % orientation angle length (for plot)
+
+options_plot = true; % plot flag
 
 time = clock();
 rng(time(6));
@@ -38,20 +40,27 @@ for i = 1:num_traj
     
     prm = mobileRobotPRM(map_res, 100);
 
-    % Generate starting/ending points and angles randomly inside the valid area
-    in=0;
-    while ~in
-        P1 = [unifrnd( min(area.c1.Vertices(:,1)), max(area.c1.Vertices(:,1)) ), unifrnd( min(area.c1.Vertices(:,2)), max(area.c1.Vertices(:,2)) )];
-        in = isinterior(area.c1,P1);
-    end
-    in=0;
-    while ~in
-        P2 = [unifrnd( min(area.c2.Vertices(:,1)), max(area.c2.Vertices(:,1)) ), unifrnd( min(area.c2.Vertices(:,2)), max(area.c2.Vertices(:,2)) )];
-        in = isinterior(area.c2,P2);
+    % Generate starting/ending points and angles (randomly) inside the valid area
+    if randomize == true
+        in=0;
+        while ~in
+            P1 = [unifrnd( min(area.c1.Vertices(:,1)), max(area.c1.Vertices(:,1)) ), unifrnd( min(area.c1.Vertices(:,2)), max(area.c1.Vertices(:,2)) )];
+            in = isinterior(area.c1,P1);
+        end
+        in=0;
+        while ~in
+            P2 = [unifrnd( min(area.c2.Vertices(:,1)), max(area.c2.Vertices(:,1)) ), unifrnd( min(area.c2.Vertices(:,2)), max(area.c2.Vertices(:,2)) )];
+            in = isinterior(area.c2,P2);
+        end
+        a1 = obj_pos.a1 + rand()*pi/8-pi/16;
+        a2 = obj_pos.a2 + rand()*pi/8-pi/16;
+    else
+        P1 = [obj_pos.x1, obj_pos.y1];
+        P2 = [obj_pos.x2, obj_pos.y2];
+        a1 = obj_pos.a1;
+        a2 = obj_pos.a2;
     end
     
-    a1 = obj_pos.a1 + rand()*pi/8-pi/16;
-    a2 = obj_pos.a2 + rand()*pi/8-pi/16;
 
 %     P1 = [(area.x1(2)-area.x1(1))*rand()+area.x1(1), (area.y1(2)-area.y1(1))*rand()+area.y1(1)];
 %     a1 = obj_pos.a1 + rand()*pi/8-pi/16;
@@ -107,7 +116,7 @@ for i = 1:num_traj
         end
     end
     
-    if options.plot
+    if options_plot
         SL.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
     end
 
@@ -153,7 +162,7 @@ for i = 1:num_traj
 %     samples.dkappa  (i,:) = dkappa  ;
 %     samples.ddkappa (i,:) = ddkappa ;
     
-    if options.plot
+    if options_plot
         plot(P1(1), P1(2), 'ro', 'MarkerEdgeColor','k', 'MarkerFaceColor','g', 'MarkerSize',5);
         plot(P2(1), P2(2), 'bo', 'MarkerEdgeColor','k', 'MarkerFaceColor','y', 'MarkerSize',5);
         quiver( P1(1), P1(2), l_vec*cos(a1), l_vec*sin(a1), 'Color', 'r' );

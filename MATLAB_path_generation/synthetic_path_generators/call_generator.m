@@ -1,4 +1,4 @@
-function samples = call_generator(generator, map_name, positions, num_traj, step, options)
+function samples = call_generator(generator, map_name, positions, num_traj, step, randomize)
 
 res = 10;        % occupancy map resolution
 inflation = 0.2; % obstacles inflation (meters)
@@ -158,6 +158,6 @@ obj_map.res = res;
 obj_map.map_res = map_res;
 
 % Call generator
-samples = feval(generator, num_traj, step, obj_pos, obj_map, options);
+samples = feval(generator, num_traj, step, obj_pos, obj_map, randomize);
 
 end

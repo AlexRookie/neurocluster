@@ -31,7 +31,7 @@ options.plot = true;
 addpath(genpath('./libraries/'));
 addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
-addpath(genpath('./datasets/'));
+addpath(genpath('./models/'));
 
 colors = customColors;
 
@@ -89,8 +89,8 @@ y = [];
 l = 1;
 for i = 1:num_classes
     % Call path generator
-    %myTrajectories = call_generator_manual(generator, map, num_traj, step, options);
-    trajectories = call_generator(generator, map, positions(i,:), num_traj, step, options);
+    %myTrajectories = call_generator_manual(generator, map, num_traj, step, 1);
+    trajectories = call_generator(generator, map, positions(i,:), num_traj, step, 1);
     Data{i} = trajectories;
     
     %figure(101);
