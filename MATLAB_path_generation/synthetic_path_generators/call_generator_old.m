@@ -143,7 +143,7 @@ drawnow;
 
 % Inflate occupancy map
 map_res = copy(map);
-inflate(map_res, inflation);
+inflate(map_res, inflation)po
 
 % Get polygons of inflated map and set as obstacles
 poly_obstacles = map2poly(map_res, res);

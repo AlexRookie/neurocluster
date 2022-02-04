@@ -82,16 +82,20 @@ end
 
 load('cross_data.mat');
 
-%{
 Data = cell(1,num_classes);
 X = [];
 y = [];
 l = 1;
 for i = 1:num_classes
     % Call path generator
+    [Map, Pos] = map_and_positions(map, positions(i,:));
+    clothoids = feval(generator, Map, Pos, num_traj, randomize);
+    samples = get_samples(clothoids, step, num_traj);
+    Data{i} = samples;
+    
     %myTrajectories = call_generator_manual(generator, map, num_traj, step, 1);
-    trajectories = call_generator(generator, map, positions(i,:), num_traj, step, 1);
-    Data{i} = trajectories;
+    %trajectories = call_generator(generator, map, positions(i,:), num_traj, step, 1);
+    %Data{i} = trajectories;
     
     %figure(101);
     %hold on, grid on, box on, axis equal;
@@ -124,7 +128,6 @@ for i = 1:num_classes
     %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
 end
 save('cross_data.mat', 'X','y','Data','map','generator','positions','classes');
-%}
 
 % Plot dataset
 % figure(1);

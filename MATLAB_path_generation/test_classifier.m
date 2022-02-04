@@ -6,7 +6,7 @@ clc;
 % Parameters
 step        = 0.08;                      % sampling step (cm)
 window      = 20;
-num_classes = 3;                         % number of classes
+num_classes = 12;                        % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'test';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
 
@@ -14,7 +14,7 @@ neural_model = 'network_som';
 som_size = [10, 10];
 units    = 80;
 classes  = num_classes;
-weights_file = 'model_appo';
+weights_file = 'models/cross_model';
 
 options.save = true;
 options.plot = true;
@@ -25,6 +25,7 @@ options.plot = true;
 addpath(genpath('./libraries/'));
 addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
+addpath(genpath('./models/'));
 
 colors = customColors;
 
@@ -46,19 +47,23 @@ model = pynet.load_weights(weights_file);
 %% Generate data
 
 num_traj = 1;
-trajectory = call_generator_manual(generator, map, num_traj, step, options);
+randomize = false;
+
+[Map, Pos] = map_and_positions(map, []);
+clothoids = feval(generator, Map, Pos, num_traj, randomize);
+samples = get_samples(clothoids, step);
 
 X = [];
 traj_points = [];
 l = 1;
-for j = 1:length(trajectory.s{1})-(window+1)
-    Xx = trajectory.x{1}(j:j+(window-1)) - trajectory.x{1}(j); % shift x and y
-    Xy = trajectory.y{1}(j:j+(window-1)) - trajectory.y{1}(j);
-    Xtheta = trajectory.theta{1}(j:j+(window-1));
-    Xkappa = trajectory.dtheta{1}(j:j+(window-1));
+for j = 1:length(samples.s{1})-(window+1)
+    Xx = samples.x{1}(j:j+(window-1)) - samples.x{1}(j); % shift x and y
+    Xy = samples.y{1}(j:j+(window-1)) - samples.y{1}(j);
+    Xtheta = samples.theta{1}(j:j+(window-1));
+    Xkappa = samples.dtheta{1}(j:j+(window-1));
   
     X(l,:) = [Xx, Xy, Xtheta, Xkappa];
-    traj_points(l,:) = [trajectory.x{1}(j+window/2), trajectory.y{1}(j+window/2)];
+    traj_points(l,:) = [samples.x{1}(j+window/2), samples.y{1}(j+window/2)];
     l = l+1;
 end
 
@@ -67,6 +72,11 @@ end
 %axis equal, grid on;
 
 %% Classify
+
+classes = {'L-U', 'L-D', 'L-R',
+           'D-L', 'D-R', 'D-U',
+           'R-D', 'R-L', 'R-U',
+           'U-R', 'U-L', 'U-D'};
 
 som_weights = double(model.get_layer('SOM').get_weights{1});
 
@@ -88,9 +98,12 @@ pred = pynet.predict(X);
 som_pred = double(pred{1});
 y_pred = double(pred{2});
 
-% Get class indexes
-[~, Y] = max(y_pred');
+% Get class indexes and confidences
+[conf, Y] = maxk(y_pred',2);
 
 % Plot
-plot(X(1,1:window)+trajectory.x{1}(1), X(1,window+1:window+window)+trajectory.y{1}(1), 'color', colors{1}, 'linewidth', 3);
-text(traj_points(1:2:end,1)+0.2, traj_points(1:2:end,2)+0.2, num2str(Y(1:2:end)'), 'fontsize', 20);
+plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
+for i = 1:5:size(traj_points,1)
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.2, [classes{Y(1,i)}, ' ', num2str(round(conf(1,i)*100))], 'fontsize', 16);
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [classes{Y(2,i)}, ' ', num2str(round(conf(2,i)*100))], 'fontsize', 16);
+end
