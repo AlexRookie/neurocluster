@@ -3,18 +3,23 @@ clear all;
 clear classes;
 clc;
 
+% Compile the C++ library first: CompileMexKerasCppClass
+
+%-------------------------------------------------------------------------%
+
 % Parameters
 step        = 0.08;                      % sampling step (cm)
 window      = 20;
-num_classes = 12;                        % number of classes
+num_classes = 3;                        % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'test';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
 
+% Python network
 neural_model = 'network_som';
 som_size = [10, 10];
 units    = 80;
 classes  = num_classes;
-weights_file = 'models/cross_model';
+weights_file = 'models/appo_model';
 
 options.save = true;
 options.plot = true;
@@ -44,6 +49,11 @@ model = pynet.define_model(som_size, units, classes);
 % Load weights
 model = pynet.load_weights(weights_file);
 
+%-------------------------------------------------------------------------%
+
+% Create C++ class instance
+cppnet = KerasCpp();
+
 %% Generate data
 
 num_traj = 1;
@@ -71,12 +81,13 @@ end
 %plot(traj_points(:,1), traj_points(:,2), '*');
 %axis equal, grid on;
 
-%% Classify
+%% Classify with Python class
 
-classes = {'L-U', 'L-D', 'L-R',
-           'D-L', 'D-R', 'D-U',
-           'R-D', 'R-L', 'R-U',
-           'U-R', 'U-L', 'U-D'};
+classes = {'L', 'R', 'S'};
+% classes = {'L-U', 'L-D', 'L-R',
+%            'D-L', 'D-R', 'D-U',
+%            'R-D', 'R-L', 'R-U',
+%            'U-R', 'U-L', 'U-D'};
 
 som_weights = double(model.get_layer('SOM').get_weights{1});
 
@@ -93,17 +104,34 @@ som_weights = double(model.get_layer('SOM').get_weights{1});
 % end
 
 % Predict
-pred = pynet.predict(X);
+py_pred = pynet.predict(X);
 
-som_pred = double(pred{1});
-y_pred = double(pred{2});
+%som_pred = double(py_pred{1});
+py_pred = double(py_pred{2});
 
 % Get class indexes and confidences
-[conf, Y] = maxk(y_pred',2);
+[Yconf, Y] = maxk(py_pred',1);
 
 % Plot
 plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
 for i = 1:5:size(traj_points,1)
-    text(traj_points(i,1)+0.2, traj_points(i,2)+0.2, [classes{Y(1,i)}, ' ', num2str(round(conf(1,i)*100))], 'fontsize', 16);
-    text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [classes{Y(2,i)}, ' ', num2str(round(conf(2,i)*100))], 'fontsize', 16);
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.2, [classes{Y(1,i)}, ' ', num2str(round(Yconf(1,i)*100))], 'fontsize', 16);
+    %text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [classes{Y(2,i)}, ' ', num2str(round(conf(2,i)*100))], 'fontsize', 16);
 end
+
+%% Classify with C++ class
+
+cpp_pred = NaN(size(X,1), num_classes);
+for i = 1:size(X,1)
+    cpp_pred(i,:) = cppnet.predict(X(i,:));
+end
+
+% Get class indexes and confidences
+[YYconf, YY] = maxk(cpp_pred',1);
+
+% Plot
+plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
+for i = 1:5:size(traj_points,1)
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [classes{YY(1,i)}, ' ', num2str(round(YYconf(1,i)*100))], 'color', 'r', 'fontsize', 16);
+end
+
