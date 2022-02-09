@@ -24,6 +24,13 @@ weights_file = 'models/appo_model';
 options.save = true;
 options.plot = true;
 
+class_names = {'L', 'R', 'S'};
+% class_names = {'L-U', 'L-D', 'L-R',
+%            'D-L', 'D-R', 'D-U',
+%            'R-D', 'R-L', 'R-U',
+%            'U-R', 'U-L', 'U-D'};
+
+
 %-------------------------------------------------------------------------%
 
 % Folder tree
@@ -58,8 +65,9 @@ cppnet = KerasCpp();
 
 num_traj = 1;
 randomize = false;
+positions = [3, 6, pi/2, 13, 6, -pi/2];
 
-[Map, Pos] = map_and_positions(map, []);
+[Map, Pos] = map_and_positions(map, positions);
 clothoids = feval(generator, Map, Pos, num_traj, randomize);
 samples = get_samples(clothoids, step);
 
@@ -76,6 +84,7 @@ for j = 1:length(samples.s{1})-(window+1)
     traj_points(l,:) = [samples.x{1}(j+window/2), samples.y{1}(j+window/2)];
     l = l+1;
 end
+clearvars Xx Xy Xtheta Xkappa;
 
 %figure(1);
 %plot(traj_points(:,1), traj_points(:,2), '*');
@@ -115,8 +124,8 @@ py_pred = double(py_pred{2});
 % Plot
 plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
 for i = 1:5:size(traj_points,1)
-    text(traj_points(i,1)+0.2, traj_points(i,2)+0.2, [classes{Y(1,i)}, ' ', num2str(round(Yconf(1,i)*100))], 'fontsize', 16);
-    %text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [classes{Y(2,i)}, ' ', num2str(round(conf(2,i)*100))], 'fontsize', 16);
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.2, [class_names{Y(1,i)}, ' ', num2str(round(Yconf(1,i)*100))], 'fontsize', 16);
+    %text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [class_names{Y(2,i)}, ' ', num2str(round(conf(2,i)*100))], 'fontsize', 16);
 end
 
 %% Classify with C++ class
@@ -132,6 +141,6 @@ end
 % Plot
 plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
 for i = 1:5:size(traj_points,1)
-    text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [classes{YY(1,i)}, ' ', num2str(round(YYconf(1,i)*100))], 'color', 'r', 'fontsize', 16);
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [class_names{YY(1,i)}, ' ', num2str(round(YYconf(1,i)*100))], 'color', 'r', 'fontsize', 16);
 end
 
