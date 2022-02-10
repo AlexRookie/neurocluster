@@ -34,7 +34,7 @@ class_names = {'L', 'R', 'S'};
 %-------------------------------------------------------------------------%
 
 % Folder tree
-addpath(genpath('./libraries/'));
+addpath(genpath('../libraries/'));
 addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./models/'));
