@@ -65,7 +65,7 @@ cppnet = KerasCpp();
 
 num_traj = 1;
 randomize = false;
-positions = [3, 6, pi/2, 13, 6, -pi/2];
+positions = [3, 2, pi/2, 13, 5, pi/2];
 
 [Map, Pos] = map_and_positions(map, positions);
 clothoids = feval(generator, Map, Pos, num_traj, randomize);
@@ -91,12 +91,6 @@ clearvars Xx Xy Xtheta Xkappa;
 %axis equal, grid on;
 
 %% Classify with Python class
-
-classes = {'L', 'R', 'S'};
-% classes = {'L-U', 'L-D', 'L-R',
-%            'D-L', 'D-R', 'D-U',
-%            'R-D', 'R-L', 'R-U',
-%            'U-R', 'U-L', 'U-D'};
 
 som_weights = double(model.get_layer('SOM').get_weights{1});
 

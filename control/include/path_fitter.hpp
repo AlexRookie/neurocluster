@@ -2,6 +2,9 @@
 
 #include <vector>
 
+const double STEP = 0.08;
+const int WINDOW = 20;
+
 struct Point { 
   int t;
   double x, y;
