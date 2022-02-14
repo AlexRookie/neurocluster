@@ -10,7 +10,14 @@ struct Point {
   Point(): Point(0, 0., 0.) {}
 };
 
+struct PolyLine { 
+  double x, y, theta, kappa;
+
+  PolyLine(double x, double y, double theta, double kappa): x(x), y(y), theta(theta), kappa(kappa) {}
+  PolyLine(): PolyLine(0., 0., 0., 0.) {}
+};
+
 int t0 = 0;
 std::vector<Point> pts;
 std::vector<Point> fit;
-std::vector<int>   st; // max t up to the beginning of the i-th segment
+std::vector<PolyLine> sp; // max t up to the beginning of the i-th segment
