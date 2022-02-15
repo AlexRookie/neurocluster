@@ -1,10 +1,16 @@
-function [Map, Pos] = map_and_positions(varargin) % map_and_positions(map_name, [positions])
+function [Map, Pos] = map_and_positions(varargin) % map_and_positions(map_name, [positions], [i])
 
 map_name = varargin{1};
 if (nargin >= 2)
     positions = varargin{2};
 else
     positions = [];
+end
+
+if (nargin >= 3)
+    it = varargin{3};
+else
+    it = 0;
 end
 
 res = 10;        % occupancy map resolution
@@ -127,7 +133,7 @@ end
 % map = binaryOccupancyMap(im,res);
 
 % Plot figure
-figure(100);
+figure(100+it);
 show(map);
 xlim(x_lim);
 ylim(y_lim);

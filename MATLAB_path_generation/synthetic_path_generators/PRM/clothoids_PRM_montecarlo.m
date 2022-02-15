@@ -72,7 +72,6 @@ for i = 1:num_traj
     collision = true;
     while collision
 
-        npts = 1000;
         CL = ClothoidSplineG2();
         CL.verbose(false);
         SL = CL.buildP1(path(:,1), path(:,2), a1, a2);
@@ -101,7 +100,9 @@ for i = 1:num_traj
     end
     
     if options_plot
+        npts = 1000;
         SL.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
+        drawnow;
     end
    
     clothoids{i} = SL;
@@ -111,6 +112,7 @@ for i = 1:num_traj
         plot(P2(1), P2(2), 'bo', 'MarkerEdgeColor','k', 'MarkerFaceColor','y', 'MarkerSize',5);
         quiver( P1(1), P1(2), l_vec*cos(a1), l_vec*sin(a1), 'Color', 'r' );
         quiver( P2(1), P2(2), l_vec*cos(a2), l_vec*sin(a2), 'Color', 'r' );
+        drawnow;
     end
 end
 

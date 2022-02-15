@@ -5,11 +5,11 @@ clc;
 
 % Parameters
 num_traj    = 50;                        % number of trajectories
-step        = 0.08;                      % sampling step (cm)
-window      = 20;
-num_classes = 12;                        % number of classes
+step        = 0.1;                       % sampling step (cm)
+window      = 12;
+num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
-map = 'cross';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
+map = 'cross';                           % map: 'void', 'cross', 'povo', 'test', 'thor1'
 
 %num_points  = 100;                       % MINIMUM number of points
 
@@ -35,35 +35,24 @@ addpath(genpath('./models/'));
 
 colors = customColors;
 
-% Import python module
-pymodule = py.importlib.import_module(neural_model);
-py.importlib.reload(pymodule);
-
-%% Generate data
+%% Data
 
 % Load dataset
 %myTrajectories = load_dataset(dataset, num_points, options);
 
-% X = [], y = [];
-% for i = 1:200
-%     X = [X; ones(1,30)*2];
-%     y = [y; 0];
-% end
-% for i = 1:200
-%     X = [X; ones(1,30)*5];
-%     y = [y; 1];
-% end
-% for i = 1:200
-%     X = [X; ones(1,30)*9];
-%     y = [y; 2];
-% end
+% Generata dataset
 
-if strcmp(map, 'void')
+load('models/cross3_data.mat');
+
+%{
+if strcmp(map, 'void') && (num_classes == 3)
+    options.randomize = true;
     positions = [6, 10, 0.0, 12, 16,  pi/2;
                  6, 10, 0.0, 12,  4, -pi/2;
                  6, 10, 0.0, 16, 10,   0.0];
     classes = [0, 1, 2];
-elseif strcmp(map, 'cross')
+elseif strcmp(map, 'cross') && (num_classes == 12)
+    options.randomize = true;
     positions = [5,  10,  0.0,  10, 15,  pi/2;
                  5,  10,  0.0,  10, 5,  -pi/2;
                  5,  10,  0.0,  17, 10,  0.0;
@@ -78,25 +67,35 @@ elseif strcmp(map, 'cross')
                  10, 15, -pi/2, 10, 3,  -pi/2;
                  ];
     classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+elseif strcmp(map, 'cross') && (num_classes == 3)
+    options.randomize = true;
+    options.augmentation = true;
+    positions = [6, 10, 0.0, 10, 14, pi/2; ...
+                 %6, 10, 0.0, 10, 12, pi/4;
+                 6, 10, 0.0, 10, 6,  -pi/2;
+                 %6, 10, 0.0, 10, 8,  -pi/4; ...
+                 7, 10, 0.0, 13, 10, 0.0];
+    classes = [0, 1, 2];
 end
-
-load('cross_data.mat');
 
 Data = cell(1,num_classes);
 X = [];
 y = [];
 l = 1;
 for i = 1:num_classes
-    % Call path generator
-    [Map, Pos] = map_and_positions(map, positions(i,:));
-    clothoids = feval(generator, Map, Pos, num_traj, randomize);
-    samples = get_samples(clothoids, step, num_traj);
-    Data{i} = samples;
-    
+    % Call path generator OLD
     %myTrajectories = call_generator_manual(generator, map, num_traj, step, 1);
     %trajectories = call_generator(generator, map, positions(i,:), num_traj, step, 1);
-    %Data{i} = trajectories;
     
+    % Call path generator
+    [Map, Pos] = map_and_positions(map, positions(i,:), i);
+    clothoids = feval(generator, Map, Pos, num_traj, options.randomize);
+    samples = get_samples(clothoids, step, options.augmentation);
+    Data{i} = samples;
+
+    % Load pre-saved samples
+    %samples = Data{i};
+
     %figure(101);
     %hold on, grid on, box on, axis equal;
     %xlabel('x (m)');
@@ -107,15 +106,15 @@ for i = 1:num_classes
     %fig2 = trajectory_features_plot(myTrajectories);
     
     % Extract samples
-    for k = 1:num_traj
-        for j = 1:length(trajectories.s{k})-(window+1)
-            Xx = trajectories.x{k}(j:j+(window-1)) - trajectories.x{k}(j); % shift x and y
-            Xy = trajectories.y{k}(j:j+(window-1)) - trajectories.y{k}(j);
-            Xtheta = trajectories.theta{k}(j:j+(window-1));
-            Xkappa = trajectories.dtheta{k}(j:j+(window-1));
+    for k = 1:max(size(samples.s))
+        for j = 1:length(samples.s{k})-(window+1)
+            Xx = samples.x{k}(j:j+(window-1)); % - samples.x{k}(j); % shift x and y
+            Xy = samples.y{k}(j:j+(window-1)); % - samples.y{k}(j);
+            Xtheta = samples.theta{k}(j:j+(window-1));
+            Xkappa = samples.dtheta{k}(j:j+(window-1));
             %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
             
-            X(l,:) = [Xx, Xy, Xtheta, Xkappa];
+            X(l,:,:) = [Xx; Xy; Xtheta; Xkappa];
             y(l,1) = classes(i);
             l = l+1;
         end
@@ -127,7 +126,8 @@ for i = 1:num_classes
     %samples_y = [samples_y; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.y, 'UniformOutput', false)')];
     %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
 end
-save('cross_data.mat', 'X','y','Data','map','generator','positions','classes');
+save('models/cross3_data.mat', 'X','y','Data','map','generator','positions','classes','options');
+%}
 
 % Plot dataset
 % figure(1);
@@ -135,8 +135,8 @@ save('cross_data.mat', 'X','y','Data','map','generator','positions','classes');
 % xlabel('x (m)');
 % xlabel('y (m)');
 % title('Dataset');
-% for i = 1:size(X,1)
-%     plot(X(i,1:window), X(i,window+1:window+window));
+% for i = 1:max(size(X,1))
+%     plot(squeeze(X(i,1,:)), squeeze(X(i,2,:)));
 % end
 
 % Shift trajectories to origin
@@ -148,11 +148,15 @@ save('cross_data.mat', 'X','y','Data','map','generator','positions','classes');
 
 %% Network
 
+% Import python module
+pymodule = py.importlib.import_module(neural_model);
+py.importlib.reload(pymodule);
+
 % Initialize Keras class
 pynet = pymodule.Network();
 
 % Define neural network model
-units = size(X,2);
+units = size(X,2:3);
 model = pynet.define_model(som_size, units, num_classes);
 
 % Load dataset
@@ -162,7 +166,7 @@ x_valid = double(samples{2});
 y_train = double(samples{3});
 y_valid = double(samples{4});
 
-%% Train network
+%% Train
 
 % Train
 model = pynet.train_model(x_train, y_train, epochs, learn_rate);
@@ -190,16 +194,16 @@ som_weights = double(model.get_layer('SOM').get_weights{1});
 pred = pynet.predict(x_valid);
 
 som_pred = double(pred{1});
-y_pred = double(pred{2});
+conf_pred = double(pred{2});
 
 % Plot confusion matrix
 [~, Y_valid] = max(y_valid');
-[~, Y_pred] = max(y_pred');
+[~, Y_pred] = max(conf_pred');
 confusion_matrix(Y_valid, Y_pred);
 
 %% Save
 
-pynet.save('cross_model');
+pynet.save('models/cross3_model');
 
 
 %% LVQ network

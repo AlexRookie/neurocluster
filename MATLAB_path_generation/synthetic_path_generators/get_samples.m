@@ -1,11 +1,24 @@
-function samples = get_samples(varargin) % get_samples(clothoids, step, [num_traj])
+function samples = get_samples(varargin) % get_samples(clothoids, step, augmentation)
+
+options_plot = true; % plot flag
 
 clothoids = varargin{1};
 step = varargin{2};
-if (nargin >= 3)
-    num_traj = varargin{3};
-else
-    num_traj = size(clothoids,1);
+augmentation = varargin{3};
+% if (nargin >= 3)
+%     num_traj = varargin{3};
+% else
+%     num_traj = size(clothoids,1);
+% end
+
+num_traj = max(size(clothoids));
+num_rot = 1;
+
+if augmentation == true
+    num_traj = num_traj*4;
+    num_rot = 4;
+    cx = 10;
+    cy = 10;
 end
 
 samples.s        = cell(1,num_traj);
@@ -25,24 +38,37 @@ samples.kappa    = cell(1,num_traj);
 samples.dkappa   = cell(1,num_traj);
 samples.ddkappa  = cell(1,num_traj);
 
-for i = 1:num_traj
-  % Get data
+k = 1;
+for i = 1:max(size(clothoids))
+    % Get data
     L = clothoids{i}.length();
-    samples.s{i} = 0:step:L;
-    
-    %if length(samples.s{i}) < num_points
-    %    error('Too few points for trajectory number %d.', i);
-    %end
-    
-    [samples.x{i}, samples.y{i}, samples.theta{i}, samples.kappa{i}] = clothoids{i}.evaluate(samples.s{i});
-    [samples.dx{i}, samples.dy{i}] = clothoids{i}.eval_D(samples.s{i});
-    [samples.ddx{i}, samples.ddy{i}] = clothoids{i}.eval_DD(samples.s{i});
-    [samples.dddx{i}, samples.dddy{i}] = clothoids{i}.eval_DDD(samples.s{i});
-    samples.dtheta{i} = clothoids{i}.theta_D(samples.s{i});
-    samples.ddtheta{i} = clothoids{i}.theta_DD(samples.s{i});
-    samples.dddtheta{i} = clothoids{i}.theta_DDD(samples.s{i});
-    samples.dkappa{i} = clothoids{i}.kappa_D(samples.s{i});
-    samples.ddkappa{i} = clothoids{i}.kappa_DD(samples.s{i});
+
+    for j = 1:num_rot
+        samples.s{k} = 0:step:L;
+        
+        if j > 1
+            clothoids{i}.rotate(pi/2, cx, cy);
+        end
+        
+        [samples.x{k}, samples.y{k}, samples.theta{k}, samples.kappa{k}] = clothoids{i}.evaluate(samples.s{k});
+        [samples.dx{k}, samples.dy{k}] = clothoids{i}.eval_D(samples.s{i});
+        [samples.ddx{k}, samples.ddy{k}] = clothoids{i}.eval_DD(samples.s{k});
+        [samples.dddx{k}, samples.dddy{k}] = clothoids{i}.eval_DDD(samples.s{k});
+        samples.dtheta{k} = clothoids{i}.theta_D(samples.s{k});
+        samples.ddtheta{k} = clothoids{i}.theta_DD(samples.s{k});
+        samples.dddtheta{k} = clothoids{i}.theta_DDD(samples.s{k});
+        samples.dkappa{k} = clothoids{i}.kappa_D(samples.s{k});
+        samples.ddkappa{k} = clothoids{i}.kappa_DD(samples.s{k});
+        
+        k = k+1;
+        
+        if options_plot
+            npts = 1000;
+            clothoids{i}.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
+            drawnow;
+        end
+        
+    end
     
 %     [x, y, theta, kappa] = SL.evaluate(linspace(0,L,num_points));
 %     [dx, dy] = SL.eval_D(linspace(0,L,num_points));
