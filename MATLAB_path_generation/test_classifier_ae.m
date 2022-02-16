@@ -3,6 +3,8 @@ clear all;
 clear classes;
 clc;
 
+% Compile the C++ library first: CompileMexKerasCppClass
+
 %-------------------------------------------------------------------------%
 
 % Parameters
@@ -127,26 +129,26 @@ figure(100);
 %plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
 for i = 1:3:size(traj_points,1)
     text(traj_points(i,1)+0.2, traj_points(i,2)+0.2, [class_names{Y(1,i)}, ' ', num2str(round(Yconf(1,i)*100))], 'color', 'k', 'fontsize', 12);
-    text(traj_points(i,1)+0.2, traj_points(i,2)+0.3, [class_names{Y(2,i)}, ' ', num2str(round(Yconf(2,i)*100))], 'color', 'r', 'fontsize', 12);
+    %text(traj_points(i,1)+0.2, traj_points(i,2)+0.3, [class_names{Y(2,i)}, ' ', num2str(round(Yconf(2,i)*100))], 'color', 'r', 'fontsize', 12);
 end
 
 %% Network with C++ class
-% 
-% % Create C++ class instance
-% cppnet = KerasCpp();
-% 
-% %-------------------------------------------------------------------------%
-% 
-% cpp_pred = NaN(size(X,1), num_classes);
-% for i = 1:size(X,1)
-%     cpp_pred(i,:) = cppnet.predict(X(i,:));
-% end
-% 
-% % Get class indexes and confidences
-% [YYconf, YY] = maxk(cpp_pred',1);
-% 
-% % Plot
-% plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
-% for i = 1:5:size(traj_points,1)
-%     text(traj_points(i,1)+0.2, traj_points(i,2)+0.4, [class_names{YY(1,i)}, ' ', num2str(round(YYconf(1,i)*100))], 'color', 'r', 'fontsize', 16);
-% end
+
+% Create C++ class instance
+cppnet = KerasCpp();
+
+%-------------------------------------------------------------------------%
+
+conf_pred = NaN(size(X,1), num_classes);
+for i = 1:size(X,1)
+    conf_pred(i,:) = cppnet.predict(reshape(squeeze(X(i,:,:))',1,[]));
+end
+
+% Get class indexes and confidences
+[YYconf, YY] = maxk(conf_pred',1);
+
+% Plot
+%plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
+for i = 1:3:size(traj_points,1)
+    text(traj_points(i,1)+0.2, traj_points(i,2)+0.3, [class_names{YY(1,i)}, ' ', num2str(round(YYconf(1,i)*100))], 'color', 'r', 'fontsize', 12);
+end
