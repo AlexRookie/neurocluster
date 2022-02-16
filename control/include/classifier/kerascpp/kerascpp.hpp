@@ -7,6 +7,10 @@
 #include <cmath>
 
 #include "core.hpp"
+#include "convolution.hpp"
+#include "recurrent.hpp"
+
+#include "reshaping.hpp"
 #include "merging.hpp"
 #include "activation.hpp"
 

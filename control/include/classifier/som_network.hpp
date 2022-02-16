@@ -1,8 +1,8 @@
 // Alessandro Antonucci @AlexRookie
 // University of Trento
 
-#ifndef SOMLAYER_H
-#define SOMLAYER_H
+#ifndef SOMNETWORK_H
+#define SOMNETWORK_H
 
 #include "kerascpp/kerascpp.hpp"
 
@@ -19,4 +19,4 @@ void Som(double inputs[units], double out_classes[classes]) {
     softmax<classes>(classifier, out_classes);
 }
 
-#endif // SOMLAYER_H
+#endif // SOMNETWORK_H

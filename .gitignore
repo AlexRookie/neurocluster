@@ -4,7 +4,7 @@
 *.fig
 *.mexmaci64
 *.ilxc
-libraries/KerasCpp/
+libraries/KerasCpp
 MATLAB_path_generation/__pycache__/
 MATLAB_path_generation/c++
 MATLAB_path_generation/datasets/edinburgh*

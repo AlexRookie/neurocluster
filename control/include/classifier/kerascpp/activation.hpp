@@ -41,6 +41,7 @@ void softmax(double in[Nin], double out[Nin]) {
     }
 }
 
+
 template <int Nin>
 void tanh(double in[Nin], double out[Nin]) {
     for(int i=0; i<Nin ; i++) {

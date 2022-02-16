@@ -2,8 +2,8 @@
 
 #include <vector>
 
-const double STEP = 0.08;
-const int WINDOW = 20;
+const double STEP = 0.1;
+const int WINDOW = 12;
 
 struct Point { 
   int t;
