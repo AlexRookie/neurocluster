@@ -40,7 +40,7 @@ colors = customColors;
 % Load dataset
 %myTrajectories = load_dataset(dataset, num_points, options);
 
-% Generata dataset
+% Generate dataset
 
 load('models/cross3_data.mat');
 
@@ -108,8 +108,8 @@ for i = 1:num_classes
     % Extract samples
     for k = 1:max(size(samples.s))
         for j = 1:length(samples.s{k})-(window+1)
-            Xx = samples.x{k}(j:j+(window-1)); % - samples.x{k}(j); % shift x and y
-            Xy = samples.y{k}(j:j+(window-1)); % - samples.y{k}(j);
+            Xx = samples.x{k}(j:j+(window-1));
+            Xy = samples.y{k}(j:j+(window-1));
             Xtheta = samples.theta{k}(j:j+(window-1));
             Xkappa = samples.dtheta{k}(j:j+(window-1));
             %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
@@ -160,7 +160,7 @@ units = size(X,2:3);
 model = pynet.define_model(som_size, units, num_classes);
 
 % Load dataset
-samples = pynet.prepare_data(X, y, 80, batch, 1);
+samples = pynet.prepare_data(X, y, 80, batch, true);
 x_train = double(samples{1});
 x_valid = double(samples{2});
 y_train = double(samples{3});
@@ -203,7 +203,7 @@ confusion_matrix(Y_valid, Y_pred);
 
 %% Save
 
-pynet.save('models/cross3_model');
+% pynet.save('models/cross3_model');
 
 
 %% LVQ network
@@ -377,78 +377,4 @@ a = net(x)
 vec2ind(a)'
 
 %-------------------------------------------------------------------------%
-%}
-
-%% Autoencoder NN
-
-%{
-% Initialize network and load Keras model
-%pynet = pymodule.Network(epochs, batch, learn_rate);
-
-% encoder = models{1}; encoder.summary();
-% decoder = models{2}; decoder.summary();
-% autoencoder = models{3};
-
-% encoder = trained{1};
-% decoder = trained{2};
-% autoencoder = trained{3};
-
-fit = trained{4};
-fit_rmse = cellfun(@double,(cell(struct(fit.history).rmse)));
-figure(2);
-plot(fit_rmse);
-
-% Prediction autoencoder
-pred = pynet.predict(autoencoder, X_valid);
-
-X_pred = double(pred);
-
-% Plot
-figure(3);
-hold on, grid on, box on, axis equal;
-xlabel('x');
-xlabel('y');
-title('Train data');
-for i = 1:size(X_train,1)
-    plot(squeeze(X_train(i,1,:)), squeeze(X_train(i,2,:)), 'k');
-end
-figure(4);
-hold on, grid on, box on, axis equal;
-xlabel('x');
-xlabel('y');
-title('Valid data');
-for i = 1:size(X_valid,1)
-    plot(squeeze(X_valid(i,1,:)), squeeze(X_valid(i,2,:)), 'b.-');
-end
-figure(5);
-hold on, grid on, box on, axis equal;
-xlabel('x');
-xlabel('y');
-title('Pred');
-for i = 1:size(X_valid,1)
-    plot(squeeze(X_pred(i,1,:)), squeeze(X_pred(i,2,:)), 'r.-');
-end
-
-% Statistics
-err_x = squeeze( mean(abs( X_valid(:,1,:)-X_pred(:,1,:)) ) );
-err_y = squeeze( mean(abs( X_valid(:,2,:)-X_pred(:,2,:)) ) );
-
-rmse_x = squeeze( sqrt( mean( (X_valid(:,1,:)-X_pred(:,1,:)).^2, 1) ) );
-rmse_y = squeeze( sqrt( mean( (X_valid(:,2,:)-X_pred(:,2,:)).^2, 1) ) );
-
-figure(10);
-subplot(1,2,1);
-hold on, grid on, box on;
-plot(err_x);
-plot(err_y);
-xlabel('samples');
-legend({'x','y'});
-title('Absolute error');
-subplot(1,2,2);
-hold on, grid on, box on;
-plot(rmse_x);
-plot(rmse_y);
-xlabel('samples');
-legend({'x','y'});
-title('Rmse');
 %}

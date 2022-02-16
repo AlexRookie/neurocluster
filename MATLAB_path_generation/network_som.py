@@ -11,8 +11,8 @@ class Network:
         self.map_size = None
         self.units    = None
         self.classes  = None
-        self.epochs     = None
         self.batch_size = None
+        self.epochs     = None
         self.l_rate     = None
 
     def define_model(self, map_size=(10,10), units=(1,10), classes=0):
@@ -47,10 +47,16 @@ class Network:
             X = X.reshape(X.shape[0], m, n)
 
         # Normalize
+        #x = np.copy(X)
+        #for i in range(x.shape[0]):
+        #    x[i, 0, :] =  (x[i, 0, :] - np.min(x[i, 0, :])) / (np.max(x[i, 0, :]) - np.min(x[i, 0, :]))
+        #    x[i, 1, :] =  (x[i, 1, :] - np.min(x[i, 1, :])) / (np.max(x[i, 1, :]) - np.min(x[i, 1, :]))
+
+        # Shift
         x = np.copy(X)
         for i in range(x.shape[0]):
-            x[i, 0, :] =  (x[i, 0, :] - np.min(x[i, 0, :])) / (np.max(x[i, 0, :]) - np.min(x[i, 0, :]))
-            x[i, 1, :] =  (x[i, 1, :] - np.min(x[i, 1, :])) / (np.max(x[i, 1, :]) - np.min(x[i, 1, :]))
+            x[i, 0, :] = x[i, 0, :] - x[i, 0, 0]
+            x[i, 1, :] = x[i, 1, :] - x[i, 1, 0]
 
         num_of_samples = x.shape[0]
         train = int(training_percentage*num_of_samples/100)
@@ -211,7 +217,9 @@ class Network:
 
         # Compile model
         #self.model.compile(optimizer='adam', loss=self.som_loss)    #, metrics=[self.rmse])
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy']) #keras.optimizers.Adam(1e-3)
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.l_rate),
+                           loss='categorical_crossentropy',
+                           metrics=['accuracy']) #keras.optimizers.Adam(1e-3)
         
         # Train model
         self.model = self.som_fit(x_train, y_train)
