@@ -4,7 +4,7 @@ clear classes;
 clc;
 
 % Parameters
-num_traj    = 50;                        % number of trajectories
+num_traj    = 150;                       % number of trajectories
 step        = 0.1;                       % sampling step (cm)
 window      = 12;
 num_classes = 3;                         % number of classes
@@ -13,12 +13,13 @@ map = 'cross';                           % map: 'void', 'cross', 'povo', 'test',
 
 %num_points  = 100;                       % MINIMUM number of points
 
-neural_model = 'network_ae';
+neural_model = 'network_ae_test';
 epochs_unsup = 300;
-epochs_sup   = 100;
+epochs_sup   = 300;
 batch = 64;
 learn_rate = 0.001;
 
+weights_file = 'models/cross3_ae_test';
 options.save = true;
 options.plot = true;
 
@@ -26,6 +27,7 @@ options.plot = true;
 
 % Folder tree
 addpath(genpath('../libraries/'));
+addpath(genpath('./data/'));
 addpath(genpath('./functions/'));
 addpath(genpath('./synthetic_path_generators/'));
 addpath(genpath('./models/'));
@@ -34,9 +36,10 @@ colors = customColors;
 
 %% Data
 
-% Generate dataset
+% Load dataset
+load('data/cross3b_data.mat');
 
-load('models/cross3_data.mat');
+% Generate dataset
 
 %{
 if strcmp(map, 'void') && (num_classes == 3)
@@ -104,11 +107,11 @@ for i = 1:num_classes
         for j = 1:length(samples.s{k})-(window+1)
             Xx = samples.x{k}(j:j+(window-1));
             Xy = samples.y{k}(j:j+(window-1));
-            Xtheta = samples.theta{k}(j:j+(window-1));
+            Xcos = cos(samples.theta{k}(j:j+(window-1)));
+            Xsin = sin(samples.theta{k}(j:j+(window-1)));
             Xkappa = samples.dtheta{k}(j:j+(window-1));
-            %[samples_x(i,j:j+(window-1)), samples_y(i,j:j+(window-1)), samples_theta(i,j:j+(window-1))];
-            
-            X(l,:,:) = [Xx; Xy; Xtheta; Xkappa];
+
+            X(l,:,:) = [Xx; Xy; Xcos; Xsin; Xkappa];
             y(l,1) = classes(i);
             l = l+1;
         end
@@ -116,11 +119,8 @@ for i = 1:num_classes
     %if min(cellfun(@length, myTrajectories.x)) < num_points
     %    error("Not enough points for the trajectories.");
     %end
-    %samples_x = [samples_x; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.x, 'UniformOutput', false)')];
-    %samples_y = [samples_y; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.y, 'UniformOutput', false)')];
-    %samples_theta = [samples_theta; cell2mat(cellfun(@(X) X(1:num_points), myTrajectories.theta, 'UniformOutput', false)')];
 end
-save('models/cross3_data.mat', 'X','y','Data','map','generator','positions','classes','options');
+save('data/cross3a_data.mat', 'X','y','Data','map','generator','positions','classes','options');
 %}
 
 % Plot dataset
@@ -134,9 +134,9 @@ save('models/cross3_data.mat', 'X','y','Data','map','generator','positions','cla
 % end
 
 % Shift trajectories to origin
-%shift_samples = samples - samples(:,:,1);
+% shift_samples = samples - samples(:,:,1);
 % Normalise samples
-%norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
+% norm_samples = (samples-min(samples,[],3))./(max(samples,[],3)-min(samples,[],3));
 % Denormalise samples
 % denorm_samples = norm_samples.*(max(samples,[],3)-min(samples,[],3)) + min(samples,[],3);
 
@@ -150,8 +150,9 @@ py.importlib.reload(pymodule);
 pynet = pymodule.Network();
 
 % Define neural network model
-units = size(X,2:3);
-models = pynet.define_model(units, num_classes);
+units = [5, 12]; %size(X,2:3);
+latent_neurons = 5;
+models = pynet.define_model(units, latent_neurons, num_classes);
 
 % Load dataset
 samples = pynet.prepare_data(X, y, 80, batch, true);
@@ -162,60 +163,86 @@ y_valid = double(samples{4});
 
 %% Train
 
-% Train
-trained = pynet.train_model(x_train, y_train, epochs_unsup, epochs_sup, learn_rate);
+% x1_train = x_train(:,1:2,:);
+% x2_train = x_train(:,3:4,:);
+% x3_train = x_train(:,5,:);
 
-encoder = trained{1}; % encoder.summary();
-decoder = trained{2};
+% Train unsup
+trained = pynet.train_model_unsup(x_train, [], epochs_unsup, learn_rate);
+
+encoder = trained{1};
 autoencoder = trained{3};
-classifier = trained{4};
-
 fit_unsup = trained{5};
-fit_sup1 = trained{6};
-fit_sup2 = trained{7};
 
-unrms = cellfun(@double,(cell(struct(fit_unsup.history).rmse)));
-unlss = cellfun(@double,(cell(struct(fit_unsup.history).loss)));
-supacc1 = cellfun(@double,(cell(struct(fit_sup1.history).accuracy)));
-suplss1 = cellfun(@double,(cell(struct(fit_sup1.history).loss)));
-supacc2 = cellfun(@double,(cell(struct(fit_sup2.history).accuracy)));
-suplss2 = cellfun(@double,(cell(struct(fit_sup2.history).loss)));
+trained = pynet.train_model_sup(x_train, y_train, epochs_sup, learn_rate);
+
+encoder = trained{1};
+classifier = trained{4};
+fit_sup = trained{5};
+fit_over = trained{6};
 
 figure(202);
 subplot(1,3,1);
 hold on, grid on, box on;
-plot(unrms, 'linewidth', 2);
-plot(unlss, 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_unsup.history).rmse))), 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_unsup.history).loss))), 'linewidth', 2);
 legend({'rmse','loss'});
 title('Unsupervised');
 subplot(1,3,2);
 hold on, grid on, box on;
 yyaxis left;
-plot(supacc1, 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_sup.history).accuracy))), 'linewidth', 2);
 yyaxis right;
-plot(suplss1, 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_sup.history).loss))), 'linewidth', 2);
 legend({'accuracy','loss'});
 title('Supervised 1');
 subplot(1,3,3);
 hold on, grid on, box on;
 yyaxis left;
-plot(supacc2, 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_over.history).accuracy))), 'linewidth', 2);
 yyaxis right;
-plot(suplss2, 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_over.history).loss))), 'linewidth', 2);
 legend({'accuracy','loss'});
 title('Supervised 2');
 
 %% Inference
 
 % Load weights
-%trained = pynet.load_weights('models/cross3ae');
+%trained = pynet.load_weights(weights_file);
 
 % Predict autoencoder
 pred = pynet.predict(autoencoder, x_valid);
 
 x_pred = double(pred);
 
-% Plot
+% Statistics
+err_x = squeeze(mean(abs(x_valid-x_pred)))';
+rmse_x = squeeze(sqrt(mean((x_valid-x_pred).^2, 1)))';
+
+figure(10);
+subplot(1,2,1);
+hold on, grid on, box on;
+plot(err_x, 'linewidth', 2);
+xlabel('samples');
+legend({'x','y','cos-theta','sin-theta','kappa'});
+title('Absolute error');
+subplot(1,2,2);
+hold on, grid on, box on;
+plot(rmse_x, 'linewidth', 2);
+xlabel('samples');
+legend({'x','y','cos-theta','sin-theta','kappa'});
+title('Rmse');
+
+% Predict classifier
+pred = pynet.predict(classifier, x_valid);
+
+y_pred = double(pred);
+
+% Plot confusion matrix
+[~, Y_valid] = max(y_valid');
+[~, Y_pred] = max(y_pred');
+confusion_matrix(Y_valid, Y_pred);
+
 %{
 figure(30);
 subplot(1,3,1);
@@ -244,44 +271,50 @@ for i = 1:size(x_valid,1)
 end
 %}
 
-% Statistics
-err_x = squeeze( mean(abs(x_valid-x_pred)) )';
-rmse_x = squeeze( sqrt(mean((x_valid-x_pred).^2, 1)) )';
-
-figure(10);
-subplot(1,2,1);
-hold on, grid on, box on;
-plot(err_x, 'linewidth', 2);
-xlabel('samples');
-legend({'x','y','theta','kappa'});
-title('Absolute error');
-subplot(1,2,2);
-hold on, grid on, box on;
-plot(rmse_x, 'linewidth', 2);
-xlabel('samples');
-legend({'x','y','theta','kappa'});
-title('Rmse');
-
-% Predict
-pred = pynet.predict(classifier, x_valid);
-
-y_pred = double(pred);
-
-% Plot confusion matrix
-[~, Y_valid] = max(y_valid');
-[~, Y_pred] = max(y_pred');
-confusion_matrix(Y_valid, Y_pred);
-
 %% Features
 
-features_1 = double(pynet.predict(encoder,X(y==0,:,:)));
-features_2 = double(pynet.predict(encoder,X(y==1,:,:)));
-features_3 = double(pynet.predict(encoder,X(y==2,:,:)));
+[~,tmptrain] = max(y_train');
+[~,tmpvalid] = max(y_valid');
 
-figure(451); plot(features_1', '.');
-figure(452); plot(features_2', '.');
-figure(453); plot(features_3', '.');
+class1 = [x_train(tmptrain==1,:,:); x_valid(tmpvalid==1,:,:)];
+class2 = [x_train(tmptrain==2,:,:); x_valid(tmpvalid==2,:,:)];
+class3 = [x_train(tmptrain==3,:,:); x_valid(tmpvalid==3,:,:)];
+
+f1 = double(pynet.predict(encoder,class1));
+f2 = double(pynet.predict(encoder,class2));
+f3 = double(pynet.predict(encoder,class3));
+
+f1a = double(pynet.predict(encoder,class1(4312,:,:)));
+f1b = double(pynet.predict(encoder,class1(1,:,:)));
+f2a = double(pynet.predict(encoder,class2(412,:,:)));
+f2b = double(pynet.predict(encoder,class2(3212,:,:)));
+f3a = double(pynet.predict(encoder,class3(1212,:,:)));
+f3b = double(pynet.predict(encoder,class3(1002,:,:)));
+
+figure(320);
+bar([mean(f1)', mean(f2)', mean(f3)']);
+figure(319);
+subplot(1,3,1);
+boxplot(f1);
+subplot(1,3,2);
+boxplot(f2);
+subplot(1,3,3);
+boxplot(f3);
+
+figure(321);
+subplot(2,3,1);
+bar([f1a', f1b']);
+subplot(2,3,4);
+bar([f1a', f2b']);
+subplot(2,3,2);
+bar([f2a', f2b']);
+subplot(2,3,5);
+bar([f2a', f3b']);
+subplot(2,3,3);
+bar([f3a', f3b']);
+subplot(2,3,6);
+bar([f3a', f1b']);
 
 %% Save
 
-pynet.save('models/cross3ae');
+%pynet.save(weights_file);

@@ -14,7 +14,7 @@ else
 end
 
 res = 10;        % occupancy map resolution
-inflation = 0.2; % obstacles inflation (meters)
+inflation = 0.3; % obstacles inflation (meters)
 
 l_vec = 0.5; % orientation angle length (for plot)
 

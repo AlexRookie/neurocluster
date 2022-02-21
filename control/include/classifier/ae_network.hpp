@@ -14,24 +14,25 @@ void AEclass(double inputs[units_rows][units_cols], double out_classes[classes])
     double prm[units_cols][units_rows];
     permute<units_rows,units_cols>(inputs, prm);
 
-    double conv_1[units_cols-3+1][6];
-    conv1d<units_cols,units_rows,6,3>(prm, cross3ae_classifier_w2, cross3ae_classifier_b2, conv_1);
-    double conv_2[10-3+1][8];
-    conv1d<10,6,8,3>(conv_1, cross3ae_classifier_w3, cross3ae_classifier_b3, conv_2);
-    double conv_3[8-3+1][10];
-    conv1d<8,8,10,3>(conv_2, cross3ae_classifier_w4, cross3ae_classifier_b4, conv_3);
+    double conv_1[8][6];
+    conv1d<units_cols, units_rows, 6, 5>(prm, cross3_ae3_classifier_w2, cross3_ae3_classifier_b2, conv_1);
+    double conv_2[6][8];
+    conv1d<8, 6, 8, 3>(conv_1, cross3_ae3_classifier_w3, cross3_ae3_classifier_b3, conv_2);
+    double conv_3[4][10];
+    conv1d<6, 8, 10, 3>(conv_2, cross3_ae3_classifier_w4, cross3_ae3_classifier_b4, conv_3);
 
-    double flat[60];
-    flatten<6,10>(conv_3, flat);
-    double encoded[16];
-    dense<60,16>(flat, cross3ae_classifier_w6, cross3ae_classifier_b6, encoded);
+    double flat[40];
+    flatten<4, 10>(conv_3, flat);
 
-    double dns[12];
-    dense<16,12>(encoded, cross3ae_classifier_w7, cross3ae_classifier_b7, dns);
-    relu<12>(dns, dns);
+    double dense_1[20];
+    dense<40, 20>(flat, cross3_ae3_classifier_w6, cross3_ae3_classifier_b6, dense_1);
+    double dense_2[10];
+    dense<20, 10>(dense_1, cross3_ae3_classifier_w7, cross3_ae3_classifier_b7, dense_2);
+    double encoded[5];
+    dense<10, 5>(dense_2, cross3_ae3_classifier_w8, cross3_ae3_classifier_b8, encoded);
 
     double classifier[classes];
-    dense<12,classes>(dns, cross3ae_classifier_w8, cross3ae_classifier_b8, classifier);
+    dense<5, classes>(encoded, cross3_ae3_classifier_w9, cross3_ae3_classifier_b9, classifier);
     softmax<classes>(classifier, out_classes);
 }
 
