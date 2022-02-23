@@ -180,7 +180,7 @@ else
     quiver( Pos.x2, Pos.y2, l_vec*cos(Pos.a2), l_vec*sin(Pos.a2), 'Color', 'r' );
     drawnow;
 end
-    
+
 % Inflate occupancy map
 map_res = copy(map);
 inflate(map_res, inflation);
