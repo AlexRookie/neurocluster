@@ -19,7 +19,7 @@ epochs_sup   = 300;
 batch = 64;
 learn_rate = 0.001;
 
-weights_file = 'models/cross3_ae_test';
+weights_file = 'models/cross3_ae3';
 options.save = true;
 options.plot = true;
 
@@ -40,13 +40,21 @@ colors = customColors;
 load('data/cross3b_data.mat');
 
 % Generate dataset
-
 %{
 if strcmp(map, 'void') && (num_classes == 3)
     options.randomize = true;
     positions = [6, 10, 0.0, 12, 16,  pi/2;
                  6, 10, 0.0, 12,  4, -pi/2;
                  6, 10, 0.0, 16, 10,   0.0];
+    classes = [0, 1, 2];
+elseif strcmp(map, 'cross') && (num_classes == 3)
+    options.randomize = true;
+    options.augmentation = true;
+    positions = [6, 10, 0.0, 10, 14, pi/2; ...
+                 %6, 10, 0.0, 10, 12, pi/4;
+                 6, 10, 0.0, 10, 6,  -pi/2;
+                 %6, 10, 0.0, 10, 8,  -pi/4; ...
+                 7, 10, 0.0, 13, 10, 0.0];
     classes = [0, 1, 2];
 elseif strcmp(map, 'cross') && (num_classes == 12)
     options.randomize = true;
@@ -64,15 +72,6 @@ elseif strcmp(map, 'cross') && (num_classes == 12)
                  10, 15, -pi/2, 10, 3,  -pi/2;
                  ];
     classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-elseif strcmp(map, 'cross') && (num_classes == 3)
-    options.randomize = true;
-    options.augmentation = true;
-    positions = [6, 10, 0.0, 10, 14, pi/2; ...
-                 %6, 10, 0.0, 10, 12, pi/4;
-                 6, 10, 0.0, 10, 6,  -pi/2;
-                 %6, 10, 0.0, 10, 8,  -pi/4; ...
-                 7, 10, 0.0, 13, 10, 0.0];
-    classes = [0, 1, 2];
 end
 
 Data = cell(1,num_classes);
@@ -120,7 +119,7 @@ for i = 1:num_classes
     %    error("Not enough points for the trajectories.");
     %end
 end
-save('data/cross3a_data.mat', 'X','y','Data','map','generator','positions','classes','options');
+save('data/cross3c_data.mat', 'X','y','Data','map','generator','positions','classes','options');
 %}
 
 % Plot dataset
@@ -184,7 +183,7 @@ fit_over = trained{6};
 figure(202);
 subplot(1,3,1);
 hold on, grid on, box on;
-plot(cellfun(@double,(cell(struct(fit_unsup.history).rmse))), 'linewidth', 2);
+plot(cellfun(@double,(cell(struct(fit_unsup.history).rmse_metric))), 'linewidth', 2);
 plot(cellfun(@double,(cell(struct(fit_unsup.history).loss))), 'linewidth', 2);
 legend({'rmse','loss'});
 title('Unsupervised');
@@ -209,6 +208,9 @@ title('Supervised 2');
 
 % Load weights
 %trained = pynet.load_weights(weights_file);
+encoder = trained{1};
+autoencoder = trained{3};
+classifier = trained{4};
 
 % Predict autoencoder
 pred = pynet.predict(autoencoder, x_valid);
@@ -242,6 +244,13 @@ y_pred = double(pred);
 [~, Y_valid] = max(y_valid');
 [~, Y_pred] = max(y_pred');
 confusion_matrix(Y_valid, Y_pred);
+% Options for paper
+set(findobj(gca,'type','text'), 'fontsize', 20);
+fh = gcf;            % access the figure handle for the confusion matrix plot
+ah = fh.Children(2); % access the corresponding axes handle
+ah.FontSize = 16;
+ah.XTickLabelRotation =  0;
+ah.Title.String = '';
 
 %{
 figure(30);
@@ -318,3 +327,13 @@ bar([f3a', f1b']);
 %% Save
 
 %pynet.save(weights_file);
+
+%% Export PDF
+
+%{
+h = gcf;
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)]);
+print(h,'filename','-dpdf','-r0');
+%}
