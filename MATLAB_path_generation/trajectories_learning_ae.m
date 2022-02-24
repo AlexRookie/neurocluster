@@ -6,7 +6,7 @@ clc;
 % Parameters
 num_traj    = 150;                       % number of trajectories
 step        = 0.1;                       % sampling step (cm)
-window      = 12;
+window      = 12;                        % number of samples
 num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'cross';                           % map: 'void', 'cross', 'povo', 'test', 'thor1'
