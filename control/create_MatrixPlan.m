@@ -34,8 +34,6 @@ addpath(genpath('../libraries/'));
 addpath(genpath('../MATLAB_path_generation/synthetic_path_generators/'));
 addpath(genpath('../MATLAB_path_generation/functions/'));
 
-colors = customColors;
-
 %% Generate data
 
 randomize    = true;
@@ -85,7 +83,7 @@ end
 
 % Plot
 %figure(100);
-%plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', colors{1}, 'linewidth', 3);
+%plot(X(1,1:window)+samples.x{1}(1), X(1,window+1:window+window)+samples.y{1}(1), 'color', 'r', 'linewidth', 3);
 %for i = 1:3:size(traj_points,1)
 %    text(traj_points(i,1)+0.2, traj_points(i,2)+0.3, [class_names{Y(1,i)}, ' ', num2str(round(Yconf(1,i)*100))], 'color', 'r', 'fontsize', 12);
 %end
@@ -99,18 +97,16 @@ WallsPoly = p(1);
 for i = 2:n
     WallsPoly = xor(WallsPoly, p(i));
 end
+clearvars p n;
 
 % Create grid map as polyshapes
 Grid = createGrid(grid_size, WallsPoly, [Map.map_res.XLocalLimits, Map.map_res.YLocalLimits]);
-
-% Plot obstacle polyshapes and grid map
-plot(WallsPoly, 'FaceColor', [0.7,0.7,0.65], 'FaceAlpha', 1, 'EdgeColor', 'k');
-plot(Grid.poly(Grid.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
 
 % Build classifier matrix
 points_to_search = 1:size(traj_points,1);
 for i = 1:numel(Grid.poly)
     if (Grid.stat(i) == -1) | isnan(Grid.cent(i))
+        Grid.stat(i) = 0;
         continue;
     end
     
@@ -133,17 +129,21 @@ for i = 1:numel(Grid.poly)
         idxs = find(c);
         points_to_search(idxs) = [];
     else
-        Grid.stat(i) = -1;
+        Grid.stat(i) = 0;
     end
 end
+clearvars c idxs points_to_search possible_classes searched_points;
 
-figure(101);
-hold on, axis equal, box on;
+% Plot obstacle polyshapes and grid map
 plot(WallsPoly, 'FaceColor', [0.7,0.7,0.65], 'FaceAlpha', 1, 'EdgeColor', 'k');
 plot(Grid.poly(Grid.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
 for i = 1:numel(Grid.poly)
-    if Grid.stat(i) == -1
+    if Grid.stat(i) == 0
         continue;
     end
-    text(Grid.cent(i,1), Grid.cent(i,2), class_names{Grid.stat(i)}, 'color', 'k', 'fontsize', 12);
+    text(Grid.cent(i,1), Grid.cent(i,2), class_names{Grid.stat(i)}, 'color', 'g', 'fontsize', 18, 'FontWeight', 'bold');
 end
+
+MatrixPlan = Grid.stat;
+
+clearvars i j l ans;
