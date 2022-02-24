@@ -1,6 +1,6 @@
 function clothoids = clothoids_PRM_montecarlo(Map, Pos, num_traj, randomize)
 
-obstacles = Map.obstacles;
+poly_obstacles = Map.poly_obstacles;
 %res = obj_map.res;
 map_res = Map.map_res;
 
@@ -14,15 +14,18 @@ time = clock();
 rng(time(6));
 
 % Find a valid area to generate starting/ending points
-area = montecarlo_area(obstacles, Pos);
+area = montecarlo_area(poly_obstacles, Pos);
 
 clothoids = cell(1,num_traj);
 
-for i = 1:num_traj
+i = 1;
+loopa = true;
+while loopa
     if mod(i,50) == 0
         disp(i);
     end
-    
+       
+    valid = true;
     prm = mobileRobotPRM(map_res, 100);
 
     % Generate starting/ending points and angles (randomly) inside the valid area
@@ -59,11 +62,20 @@ for i = 1:num_traj
     else
         path(end+1,:) = P2;
     end
+       
+    to_del = []; % remove consecutive points if d <= 1e-3
+    for k = 2:max(size(path))
+        if (norm([path(k,:)-path(k-1,:)]) <= 1e-3)
+            to_del = [to_del, k];
+        end
+    end
+    path(to_del,:) = [];
     
     % Plot the PRM path
     % plot(path(:,1),path(:,2),'LineWidth',2)
     
     % Build the spline using the points planned with PRM until there is no collisions
+    counter = 1;
     collision = true;
     while collision
 
@@ -73,9 +85,9 @@ for i = 1:num_traj
         collision = false;
 
         % Check spline-obstacles interections
-        for k = 1:size(obstacles,1)
-            for j = 2:size(obstacles{k,1},2)
-                L = LineSegment(obstacles{k,1}(:,j-1), obstacles{k,1}(:,j));
+        for k = 1:size(poly_obstacles,1)
+            for j = 2:size(poly_obstacles{k,1},2)
+                L = LineSegment(poly_obstacles{k,1}(:,j-1), poly_obstacles{k,1}(:,j));
                 if SL.collision(L)
                     collision = true;
                     
@@ -83,9 +95,17 @@ for i = 1:num_traj
                     [X,Y]=SL.eval(SL.intersect(L));
                     % Determine which of the spline segments collided
                     i_coll = SL.closestSegment(mean(X),mean(Y)) + 1;
-                    % Add a contraint point in the colliding segment
+                    % Add a constraint point in the colliding segment
                     path = [path(1:i_coll,:); mean(path(i_coll:i_coll+1,1)),mean(path(i_coll:i_coll+1,2)); path(i_coll+1:end,:)];
                     % error('Spline has a collision!');
+                    
+                    to_del = []; % remove consecutive points if d <= 1e-3
+                    for k = 2:max(size(path))
+                        if (norm([path(k,:)-path(k-1,:)]) <= 1e-3)
+                            to_del = [to_del, k];
+                        end
+                    end
+                    path(to_del,:) = [];
                     break;
                 end
             end
@@ -93,20 +113,32 @@ for i = 1:num_traj
                 break;
             end
         end
+        counter = counter+1;
+        if counter > 20
+            valid = false;
+            break;
+        end
     end
+    
+    if (valid == false)
+        continue;
+    end
+    
+    clothoids{i} = SL;
+    i = i+1;
     
     if options_plot
         npts = 1000;
         SL.plot(npts,{'Color','blue','LineWidth',2},{'Color','blue','LineWidth',2});
-    end
-   
-    clothoids{i} = SL;
-    
-    if options_plot
+        
         plot(P1(1), P1(2), 'ro', 'MarkerEdgeColor','k', 'MarkerFaceColor','g', 'MarkerSize',5);
         plot(P2(1), P2(2), 'bo', 'MarkerEdgeColor','k', 'MarkerFaceColor','y', 'MarkerSize',5);
         quiver( P1(1), P1(2), l_vec*cos(a1), l_vec*sin(a1), 'Color', 'r' );
         quiver( P2(1), P2(2), l_vec*cos(a2), l_vec*sin(a2), 'Color', 'r' );
+    end
+    
+    if i > 1:num_traj
+        loopa = false;
     end
 end
 

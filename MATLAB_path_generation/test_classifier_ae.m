@@ -9,7 +9,7 @@ clc;
 
 % Parameters
 step        = 0.1;                       % sampling step (cm)
-window      = 12;
+window      = 12;                        % number of samples
 num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'test';                            % map: 'void', 'cross', 'povo', 'test', 'thor1'
@@ -66,7 +66,7 @@ for j = 1:length(samples.s{1})-(window+1)
     traj_points(l,:) = [samples.x{1}(j+window/2), samples.y{1}(j+window/2)];
     l = l+1;
 end
-clearvars Xx Xy Xtheta Xkappa;
+clearvars Xx Xy Xcos Xsin Xkappa;
 
 %figure(1);
 %plot(traj_points(:,1), traj_points(:,2), '*');

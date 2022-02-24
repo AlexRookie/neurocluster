@@ -72,7 +72,7 @@ if not(isempty(map_name))
     % Plot obstacle map
     %{
     fillFlag = true;
-    figure(101);
+    figure(120);
     hold on, axis equal, grid on, axis tight, box on;
     for i = 1:size(obstacles,1)
         xV = obstacles{i,1}(1,:);
@@ -87,29 +87,21 @@ if not(isempty(map_name))
     
     % Shift map origin to (0,0)
     if x_lim(1) < 0
-        for i = 1:size(obstacles,1)
-            obstacles{i}(1,:) = obstacles{i}(1,:) + abs(x_lim(1));
-        end
-        x_lim = x_lim + abs(x_lim(1));
-    end
-    if x_lim(1) > 0
-        for i = 1:size(obstacles,1)
-            obstacles{i}(1,:) = obstacles{i}(1,:) - abs(x_lim(1));
-        end
-        x_lim = x_lim - abs(x_lim(1));
+        trasl_x = abs(x_lim(1));
+    elseif x_lim(1) > 0
+        trasl_x = - abs(x_lim(1));
     end
     if y_lim(1) < 0
-        for i = 1:size(obstacles,1)
-            obstacles{i}(2,:) = obstacles{i}(2,:) + abs(y_lim(1));
-        end
-        y_lim = y_lim + abs(y_lim(1));
+        trasl_y = abs(y_lim(1));
+    elseif x_lim(1) > 0
+        trasl_y = - abs(y_lim(1));
     end
-    if y_lim(1) > 0
-        for i = 1:size(obstacles,1)
-            obstacles{i}(2,:) = obstacles{i}(2,:) - abs(y_lim(1));
-        end
-        y_lim = y_lim - abs(y_lim(1));
+    for i = 1:size(obstacles,1)
+        obstacles{i}(1,:) = obstacles{i}(1,:) + trasl_x;
+        obstacles{i}(2,:) = obstacles{i}(2,:) + trasl_y;
     end
+    x_lim = x_lim + trasl_x;
+    y_lim = y_lim + trasl_y;
     
     % Create occupancy map
     map = false((y_lim(2)-y_lim(1)).*res, (x_lim(2)-x_lim(1)).*res);
@@ -126,18 +118,22 @@ if isempty(map_name)
     map = binaryOccupancyMap(simpleMap,res);
 end
 
-% image = imread([map_name,'.png']);
-% grayimage = rgb2gray(image);
-% bwimage = grayimage < 0.5;
-% im = imresize(bwimage, 1/40);
-% map = binaryOccupancyMap(im,res);
-
 % Plot figure
 figure(100+it);
 show(map);
 xlim(x_lim);
 ylim(y_lim);
 hold on;
+
+if strcmp(map_name, 'povo2Atrium')
+    r = readlines('povo2Atrium_listaQR.txt');
+    qr = jsondecode(r{1}).value;
+    hold on;
+    for i = 1:length(qr)
+        plot(qr(i).x + trasl_x, qr(i).y + trasl_y, '*');
+        text(qr(i).x + trasl_x, qr(i).y + trasl_y, num2str(qr(i).id));
+    end
+end
 
 if isempty(positions)    
     % Get position 1
@@ -193,7 +189,8 @@ poly_obstacles = map2poly(map_res, res);
 %     plot(poly_obstacles{i}(1,:),poly_obstacles{i}(2,:), 'g');
 % end
 
-Map.obstacles = poly_obstacles;
+Map.obstacles = obstacles;
+Map.poly_obstacles = poly_obstacles;
 Map.res = res;
 Map.map_res = map_res;
 

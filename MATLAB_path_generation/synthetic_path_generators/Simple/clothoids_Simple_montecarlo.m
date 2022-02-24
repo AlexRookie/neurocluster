@@ -1,6 +1,6 @@
 function clothoids = clothoids_Simple_montecarlo(Map, Pos, num_traj, randomize)
 
-obstacles = Map.obstacles;
+poly_obstacles = Map.poly_obstacles;
 %res = obj_map.res;
 map_res = Map.map_res;
 
@@ -14,7 +14,7 @@ time = clock();
 rng(time(6));
 
 % Find a valid area to generate starting/ending points
-area = montecarlo_area(obstacles, Pos);
+area = montecarlo_area(poly_obstacles, Pos);
 
 clothoids = cell(1,num_traj);
 
@@ -54,9 +54,9 @@ for i = 1:num_traj
         collision = false;
 
         % Check spline-obstacles interections
-        for k = 1:size(obstacles,1)
-            for j = 2:size(obstacles{k,1},2)
-                L = LineSegment(obstacles{k,1}(:,j-1), obstacles{k,1}(:,j));
+        for k = 1:size(poly_obstacles,1)
+            for j = 2:size(poly_obstacles{k,1},2)
+                L = LineSegment(poly_obstacles{k,1}(:,j-1), poly_obstacles{k,1}(:,j));
                 if SL.collision(L)
                     collision = true;
                     

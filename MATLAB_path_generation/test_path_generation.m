@@ -9,7 +9,7 @@ addpath(genpath('./synthetic_path_generators/'));
 % Parameters
 num_traj   = 1;
 generator = 'clothoids_PRM_montecarlo';
-map = 'povo';
+map = 'povo2Atrium';
 
 options.randomize = false;
 %options.augmentation = false;
