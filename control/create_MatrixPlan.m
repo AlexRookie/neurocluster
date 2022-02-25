@@ -1,3 +1,8 @@
+% Create the Matrix plan for the control
+
+% Alessandro Antonucci @AlexRookie
+% University of Trento
+
 close all;
 clear all;
 clear classes;
@@ -38,7 +43,7 @@ addpath(genpath('../MATLAB_path_generation/functions/'));
 
 randomize    = true;
 augmentation = false;
-positions = [1, 5, 0.0, 9.8, 2, -pi/2];
+positions = [1, 6, 0.0, 10.8, 1, -pi/2];
 
 [Map, Pos] = map_and_positions(map, positions);
 clothoids = feval(generator, Map, Pos, num_traj, randomize);
@@ -145,5 +150,7 @@ for i = 1:numel(Grid.poly)
 end
 
 MatrixPlan = Grid.stat;
+
+save('data/atrio1.mat', 'MatrixPlan','conf_pred','Map','positions','clothoids','samples');
 
 clearvars i j l ans;
