@@ -5,7 +5,6 @@
 
 close all;
 clear all;
-clear classes;
 clc;
 
 % Compile the C++ library first: CompileMexKerasCppClass
@@ -191,12 +190,12 @@ for i = 1:numel(Grid.poly)
     if Grid.stat(i) == 0
         continue;
     end
-    quiver(Grid.cent(i,1), Grid.cent(i,2), 0.5*cos(Grid.stat(i)), 0.5*sin(Grid.stat(i)), 'color', 'r', 'linewidth', 2);
+    quiver(Grid.cent(i,1), Grid.cent(i,2), 0.5*cos(Grid.theta(i)), 0.5*sin(Grid.theta(i)), 'color', 'r', 'linewidth', 2);
 end
 
 MatrixPlan = Grid.stat;
-ThetaPlan  = Grid.stat;
+ThetaPlan  = Grid.theta;
 
-%save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','conf_pred','Map','positions','clothoids','samples');
+save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','Grid','conf_pred','Map','positions','clothoids','samples');
 
 clearvars i j l ans;
