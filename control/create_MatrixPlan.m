@@ -20,8 +20,7 @@ num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 map = 'povo2Atrium';                     % map name
 
-grid_points = 1.0;                       % grid map sizes
-grid_thetas = 2.0;
+grid_size = 1.0;                         % grid map size
 
 % network units: [5, 12]
 % latent neurons: 5
@@ -108,8 +107,8 @@ end
 clearvars p n;
 
 % Create grid map as polyshapes
-Grid  = createGrid(grid_points, WallsPoly, [Map.map_res.XLocalLimits, Map.map_res.YLocalLimits]);
-Grid2 = createGrid(grid_thetas, WallsPoly, [Map.map_res.XLocalLimits, Map.map_res.YLocalLimits]);
+Grid  = createGrid(grid_size, WallsPoly, [Map.map_res.XLocalLimits, Map.map_res.YLocalLimits]);
+%Grid2 = createGrid(grid_thetas, WallsPoly, [Map.map_res.XLocalLimits, Map.map_res.YLocalLimits]);
 
 % Build classifier matrix
 points_to_search = 1:size(traj_points,1);
@@ -144,18 +143,18 @@ end
 clearvars c idxs possible_classes points_to_search searched_points;
 
 % Build orientations matrix
-points_to_search = 1:size(traj_points,1);
-for i = 1:numel(Grid2.poly)
-    if (Grid2.stat(i) == -1) | isnan(Grid2.cent(i))
-        Grid2.stat(i) = 100;
+points_to_search = 1:size(traj_thetas,1);
+for i = 1:numel(Grid.poly)
+    if (Grid.stat(i) == -1) | isnan(Grid.cent(i))
+        Grid.theta(i) = 100;
         continue;
     end
     
     possible_theta = [];
     searched_points = [];
     for j = points_to_search
-        if norm([Grid2.cent(i,:)- traj_points(j,:)]) < Grid2.size*2
-            if insidePolygon(Grid2.poly(i).Vertices, traj_points(j,:))
+        if norm([Grid.cent(i,:)- traj_points(j,:)]) < Grid.size*2
+            if insidePolygon(Grid.poly(i).Vertices, traj_points(j,:))
                 % Save theta
                 possible_theta(end+1) = traj_thetas(j,1);
                 searched_points(end+1) = j;
@@ -164,13 +163,13 @@ for i = 1:numel(Grid2.poly)
     end
     if not(isempty(possible_theta))
         % Get mean orientation
-        Grid2.stat(i) = nanmean(possible_theta);
+        Grid.theta(i) = nanmean(possible_theta);
         % Remove searched points to speed up computation
         c = ismember(points_to_search, searched_points);
         idxs = find(c);
         points_to_search(idxs) = [];
     else
-        Grid2.stat(i) = 100;
+        Grid.theta(i) = 100;
     end
 end
 clearvars c idxs possible_theta points_to_search searched_points;
@@ -187,17 +186,17 @@ end
 figure(51);
 hold on, box on, axis equal;
 plot(WallsPoly, 'FaceColor', [0.7,0.7,0.65], 'FaceAlpha', 1, 'EdgeColor', 'k');
-plot(Grid2.poly(Grid2.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
-for i = 1:numel(Grid2.poly)
-    if abs(Grid2.stat(i)-100)<1e-3
+plot(Grid.poly(Grid.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
+for i = 1:numel(Grid.poly)
+    if Grid.stat(i) == 0
         continue;
     end
-    quiver(Grid2.cent(i,1), Grid2.cent(i,2), 0.5*cos(Grid2.stat(i)), 0.5*sin(Grid2.stat(i)), 'color', 'r', 'linewidth', 2);
+    quiver(Grid.cent(i,1), Grid.cent(i,2), 0.5*cos(Grid.stat(i)), 0.5*sin(Grid.stat(i)), 'color', 'r', 'linewidth', 2);
 end
 
 MatrixPlan = Grid.stat;
-ThetaPlan  = Grid2.stat;
+ThetaPlan  = Grid.stat;
 
-save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','conf_pred','Map','positions','clothoids','samples');
+%save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','conf_pred','Map','positions','clothoids','samples');
 
 clearvars i j l ans;
