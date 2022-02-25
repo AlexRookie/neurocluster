@@ -71,8 +71,8 @@ if not(isempty(map_name))
     
     % Plot obstacle map
     %{
-    fillFlag = true;
     figure(120);
+    fillFlag = true;
     hold on, axis equal, grid on, axis tight, box on;
     for i = 1:size(obstacles,1)
         xV = obstacles{i,1}(1,:);
@@ -86,6 +86,8 @@ if not(isempty(map_name))
     %}
     
     % Shift map origin to (0,0)
+    trasl_x = 0;
+    trasl_y = 0;
     if x_lim(1) < 0
         trasl_x = abs(x_lim(1));
     elseif x_lim(1) > 0
@@ -183,12 +185,16 @@ inflate(map_res, inflation);
 
 % Get polygons of inflated map and set as obstacles
 poly_obstacles = map2poly(map_res, res);
-
 % DEBUG
-% for i = 1:size(poly_obstacles)
-%     plot(poly_obstacles{i}(1,:),poly_obstacles{i}(2,:), 'g');
-% end
+%{
+cellfun(@plot, poly_obstacles);
+axis([-1,20,-1,20]);
+%}
 
+% Find a valid area to generate starting/ending points
+area = montecarlo_area(poly_obstacles, Pos);
+
+Map.area = area;
 Map.obstacles = obstacles;
 Map.poly_obstacles = poly_obstacles;
 Map.res = res;

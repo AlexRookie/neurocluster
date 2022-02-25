@@ -1,7 +1,7 @@
 function clothoids = clothoids_Simple_montecarlo(Map, Pos, num_traj, randomize)
 
+area = Map.area;
 poly_obstacles = Map.poly_obstacles;
-%res = obj_map.res;
 map_res = Map.map_res;
 
 %step = 0.05; % sampling step (cm)
@@ -12,9 +12,6 @@ options_plot = true; % plot flag
 
 time = clock();
 rng(time(6));
-
-% Find a valid area to generate starting/ending points
-area = montecarlo_area(poly_obstacles, Pos);
 
 clothoids = cell(1,num_traj);
 

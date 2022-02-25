@@ -9,19 +9,17 @@ addpath(genpath('./synthetic_path_generators/'));
 % Parameters
 num_traj   = 1;
 generator = 'clothoids_PRM_montecarlo';
-map = 'povo2Atrium';
-
-options.randomize = false;
-%options.augmentation = false;
-
-positions = [];
+map = 'test';
 
 % Call path generator
+positions = []; %[1, 6, 0.0, 10.8, 1, -pi/2];
 [Map, Pos] = map_and_positions(map, positions);
-%clothoids = feval(generator, Map, Pos, num_traj, options.randomize);
+randomize = false;
+clothoids = feval(generator, Map, Pos, num_traj, randomize);
 
 % Create samples
-%samples = get_samples(clothoids, step, options.augmentation);
+%augmentation = false;
+%samples = get_samples(clothoids, step, augmentation);
 
 % Save map
 % %fh = gcf;            % access the figure handle
