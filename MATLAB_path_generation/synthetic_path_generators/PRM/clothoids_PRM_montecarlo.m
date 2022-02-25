@@ -20,7 +20,7 @@ while loopa
     end
        
     valid = true;
-    prm = mobileRobotPRM(map_res, 300);
+    prm = mobileRobotPRM(map_res, 200);
 
     % Generate starting/ending points and angles (randomly) inside the valid area
     if randomize == true
