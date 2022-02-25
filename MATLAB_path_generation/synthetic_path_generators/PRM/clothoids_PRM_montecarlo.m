@@ -4,10 +4,7 @@ area = Map.area;
 poly_obstacles = Map.poly_obstacles;
 map_res = Map.map_res;
 
-%step = 0.05; % sampling step (cm)
-
 l_vec = 0.5; % orientation angle length (for plot)
-
 options_plot = true; % plot flag
 
 time = clock();
@@ -23,7 +20,7 @@ while loopa
     end
        
     valid = true;
-    prm = mobileRobotPRM(map_res, 100);
+    prm = mobileRobotPRM(map_res, 300);
 
     % Generate starting/ending points and angles (randomly) inside the valid area
     if randomize == true
@@ -82,9 +79,9 @@ while loopa
         collision = false;
 
         % Check spline-obstacles interections
-        for k = 1:size(poly_obstacles,1)
-            for j = 2:size(poly_obstacles{k,1},2)
-                L = LineSegment(poly_obstacles{k,1}(:,j-1), poly_obstacles{k,1}(:,j));
+        for k = 1:max(size(poly_obstacles))
+            for j = 2: max(size(poly_obstacles{k}.Vertices))
+                L = LineSegment(poly_obstacles{k}.Vertices(j-1,:), poly_obstacles{k}.Vertices(j,:));
                 if SL.collision(L)
                     collision = true;
                     
