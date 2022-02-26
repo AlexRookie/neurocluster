@@ -8,11 +8,12 @@ function Grid = createGrid(gridsize, Walls, maplims)
 %   maplims:  map limits
 %
 % Out:
-%   Grid.poly: grid polyshapes (N,M)
-%   Grid.stat: grid static boolean matrix (-1 if grid cell intersect walls) (N,M)
-%   Grid.size: grid cells size
-%   Grid.bbox: grid cell bounding boxes (N*M,4)
-%   Grid.cent: centroid positions (N*M,2)
+%   Grid.poly:  grid polyshapes (N,M)
+%   Grid.stat:  classes matrix (-1 if grid cell intersect walls) (N,M)
+%   Grid.theta: theta matrix (N,M)
+%   Grid.size:  grid cells size
+%   Grid.bbox:  grid cell bounding boxes (N*M,4)
+%   Grid.cent:  centroid positions (N*M,2)
 %
 % Alessandro Antonucci @AlexRookie
 % University of Trento
@@ -58,6 +59,9 @@ if not(isempty(Walls))
         end
     end
 end
+
+% Grid theta
+Grid.theta = zeros(size(Grid.poly));
 
 % Grid size
 Grid.size = gridsize;

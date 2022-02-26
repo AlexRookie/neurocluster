@@ -1,4 +1,7 @@
-% run classifier
+% Run classifier sim
+
+% Alessandro Antonucci @AlexRookie
+% University of Trento
 
 %% Create model
 
