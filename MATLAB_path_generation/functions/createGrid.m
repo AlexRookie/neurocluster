@@ -36,6 +36,7 @@ end
 
 % Check wall intersections with grid map
 Grid.stat = zeros(size(Grid.poly));
+Grid.theta = zeros(size(Grid.poly));
 maxAreaOcc = area(Grid.poly(1))*(1-(TOL/100));
 if not(isempty(Walls))
     for i = 1:size(Grid.poly,1)

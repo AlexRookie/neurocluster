@@ -10,20 +10,48 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <ros_layer_walker/wheels_current.h>
-#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Pose2D.h>
 
 #include <fstream>
 using namespace std;
 using json = nlohmann::json;
 
+//************************************************************************************************************************************
+//************************************************************************************************************************************
+
 enum WALKER_NODE{DESELECT = 0, FRONT_LEFT = 1, FRONT_RIGHT = 2, REAR_RIGHT = 3, REAR_LEFT = 4};
+
+/*! \details Structure representing the front data of the walker. */
+struct OdomInfo{
+  double x; /*!< linear position x. */
+  double y; /*!< linear position y.*/
+  double theta; /*!< angular position theta.*/
+  double v; /*!< linear velocity.*/
+  double omega; /*!< angular velocity.*/
+};
+
+/*! \details Structure representing the front data of the walker. */
+struct FrontNode{
+  double speed; /*!< \a velocity of the front wheel. */
+  double angle; /*!< \a angle of the wheel.*/
+  int current; /*!< \a absorbed current in mA.*/
+  bool isAlive; /*!< boolean identifying the status of the node.*/
+  bool isDisabled; /*!< boolean identifying if the node is disabled.*/
+};
+
+//************************************************************************************************************************************
+//************************************************************************************************************************************
 
 static volatile int terminating = 0;
 
-double xx, yy, thth, omom, vv;
+OdomInfo odomI;
+
+FrontNode frontLeft; /*!< Front left node */
+FrontNode frontRight; /*!< Front right node */
 
 ZMQCommon::RequesterSimple req("tcp://192.168.3.2:5601"); 
-ZMQCommon::Subscriber sub;
+ZMQCommon::Subscriber subLOC;
+ZMQCommon::Subscriber subHW;
 
 void intHandler(int dummy) {
 	terminating = 1;
@@ -97,50 +125,40 @@ bool currentSteering(ZMQCommon::RequesterSimple & req, double left, double right
 }
 
 
-void sub_callback(const char *topic, const char *buf, size_t size, void *data){
-    json j;
-    try{
-	j = json::parse(string(buf, size));
-	//j = j.at("state");
-	double x = round((double)j.at("state").at("x")*100)/100.0;
-	double y = round((double)j.at("state").at("y")*100)/100.0;
-	//int z = j.at("z");
-	double theta = j.at("state").at("theta");
-	double omega = j.at("state").at("omega");
-	double v = j.at("state").at("v");
-	
-	xx = x;
-	yy = y;
-	thth = theta;
-	omom = omega;
-	vv = v;
+void loc_callback(const char *topic, const char *buf, size_t size, void *data){
+  json j;
+  try{
 
-	/*double covxx = j.at("covariance")[0];
-	double covxy = j.at("covariance")[1];
-	double covyy = j.at("covariance")[2];
-	double tmp[4] = {covxx,covxy,covxy,covyy};
-
-	QGenericMatrix<2, 2, double> cov(tmp);
-
-	cout << j.dump() << endl << endl;*/
-	
-
-    }catch(exception &e){
-	cerr << "error parsing: " << e.what() << endl;
-    }
+    j = json::parse(string(buf, size));
+    //j = j.at("state");
+    odomI.x = round((double)j.at("state").at("x")*100)/100.0;
+    odomI.y = round((double)j.at("state").at("y")*100)/100.0;
+    //int z = j.at("z");
+    odomI.theta = j.at("state").at("theta");
+    odomI.omega = j.at("state").at("omega");
+    odomI.v = j.at("state").at("v");
+  
+    /*double covxx = j.at("covariance")[0];
+    double covxy = j.at("covariance")[1];
+    double covyy = j.at("covariance")[2];
+    double tmp[4] = {covxx,covxy,covxy,covyy};
+    QGenericMatrix<2, 2, double> cov(tmp);
+    cout << j.dump() << endl << endl;*/
+    
+  }catch(exception &e){
+    cerr << "error parsing: " << e.what() << endl;
+  }
 }
 
 void odometry(ros::Publisher odom_pub, tf::TransformBroadcaster odom_broadcaster, ros::Time current_time)
 {
-	double x = xx;
-	double y = yy;
-	double th = thth;
+	double x = odomI.x;
+	double y = odomI.y;
+	double th = odomI.theta;
 
-	double vx = vv*cos(th);
-	double vy = vv*sin(th);
-	double vth = omom;
-
-	//cout << "x: " << x << " y: " << y << " theta: " << th << endl;
+	double vx = odomI.v*cos(th);
+	double vy = odomI.v*sin(th);
+	double vth = odomI.omega;
 
 	//since all odometry is 6DOF we'll need a quaternion created from yaw
 	geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
@@ -180,9 +198,51 @@ void odometry(ros::Publisher odom_pub, tf::TransformBroadcaster odom_broadcaster
 	odom_pub.publish(odom);
 }
 
-void command_torque(const geometry_msgs::Twist &curr)
+void hwInfo(ros::Publisher hw_pub)
 {
-	currentSteering(req,curr.linear.x,curr.linear.y,curr.linear.z);
+	//we'll publish the wheels angles message over ROS
+	geometry_msgs::Pose2D infos;
+	infos.x = frontLeft.angle;
+  infos.y = frontRight.angle;
+
+	//publish the message
+	hw_pub.publish(infos);
+}
+
+void hw_callback(const char *topic, const char *buf, size_t size, void *data){
+  json j;
+  json j_out;
+  try{
+    j = json::parse(string(buf, size));
+
+    j_out = j.at("1");
+    frontLeft.isDisabled = false;
+    j_out = j_out.at("state");
+    frontLeft.angle = j_out.at("pos");
+    frontLeft.speed = j_out.at("vel");
+    frontLeft.current = j_out.at("cur");
+    j_out =  j.at("1").at("status");
+    frontLeft.isAlive = j_out.at("alive");
+    frontLeft.isDisabled = true;
+
+    j_out = j.at("2");
+    frontRight.isDisabled = false;
+    j_out = j_out.at("state");
+    frontRight.angle = j_out.at("pos");
+    frontRight.speed = j_out.at("vel");
+    frontRight.current = j_out.at("cur");
+    j_out = j.at("2").at("status");
+    frontRight.isAlive = j_out.at("alive");
+    frontRight.isDisabled = true;
+
+  }catch(exception &e){
+    cerr << "error parsing: " << e.what() << endl;
+  }
+}
+
+void command_torque(const geometry_msgs::Pose2D &curr)
+{
+	currentSteering(req,curr.x,curr.y,curr.theta);
 }
 
 
@@ -197,8 +257,13 @@ int main (int argc, char *argv[])
   cout << sendRequest(arucolist,jobj_aruco) << endl;
   arucolist.close();
   
-  sub.register_callback([&](const char *topic, const char *buf, size_t size, void *data){sub_callback(topic,buf,size,data);});
-  sub.start("tcp://192.168.3.1:5563","LOC");
+  // Subscribe to the location ZMQ publisher of the robot
+  subLOC.register_callback([&](const char *topic, const char *buf, size_t size, void *data){loc_callback(topic,buf,size,data);});
+  subLOC.start("tcp://192.168.3.1:5563","LOC");
+
+  // Subscribe to the hardware information ZMQ publisher of the robot
+  subHW.register_callback([&](const char *topic, const char *buf, size_t size, void *data){hw_callback(topic,buf,size,data);});
+  subHW.start("tcp://192.168.3.2:6000","PUB_HW");
 
   while (!terminating && !powerOn(req)) {
     cerr << "[WARN] Cannot start robot..." << endl;
@@ -213,7 +278,9 @@ int main (int argc, char *argv[])
   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
   tf::TransformBroadcaster odom_broadcaster;
 
-  ros::Subscriber ros_sub = n.subscribe("cmd_vel", 1000, command_torque);
+  ros::Publisher hw_pub = n.advertise<geometry_msgs::Pose2D>("wheels_angle", 50);
+
+  ros::Subscriber ros_sub = n.subscribe("cmd_current", 50, command_torque);
 
   ros::Time current_time;
 
@@ -224,10 +291,12 @@ int main (int argc, char *argv[])
     
     odometry(odom_pub,odom_broadcaster,current_time);
 
+    hwInfo(hw_pub);
+
     r.sleep();
   }
   
-  sub.stop();
+  subLOC.stop();
   walkerStop(req);
   powerOff(req);
   req.close();

@@ -195,8 +195,8 @@ for i = 1:numel(Grid.poly)
 end
 
 MatrixPlan = Grid.stat;
-ThetaPlan  = Grid.stat;
+ThetaPlan  = Grid.theta;
 
-%save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','conf_pred','Map','positions','clothoids','samples');
+save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','Grid','class_names','grid_size','conf_pred','Map','positions','clothoids','samples');
 
 clearvars i j l ans;
