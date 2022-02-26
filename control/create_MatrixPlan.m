@@ -187,7 +187,7 @@ hold on, box on, axis equal;
 plot(WallsPoly, 'FaceColor', [0.7,0.7,0.65], 'FaceAlpha', 1, 'EdgeColor', 'k');
 plot(Grid.poly(Grid.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
 for i = 1:numel(Grid.poly)
-    if Grid.stat(i) == 0
+    if Grid.theta(i) == 0
         continue;
     end
     quiver(Grid.cent(i,1), Grid.cent(i,2), 0.5*cos(Grid.theta(i)), 0.5*sin(Grid.theta(i)), 'color', 'b', 'linewidth', 2);

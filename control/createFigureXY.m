@@ -6,7 +6,7 @@ positions = [1, 6, 0.0, 10.8, 1, -pi/2];
 
 % Plot obstacle polyshapes and grid map
 for i = 1:numel(Grid.poly)
-    if Grid.stat(i) == 0
+    if Grid.theta(i) == 100
         continue;
     end
     quiver(Grid.cent(i,1), Grid.cent(i,2), 0.5*cos(Grid.theta(i)), 0.5*sin(Grid.theta(i)), 'color', 'b', 'linewidth', 2);
