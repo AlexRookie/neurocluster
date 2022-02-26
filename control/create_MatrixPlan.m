@@ -19,12 +19,12 @@ num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
 
 map = 'povo2Atrium';                     % map name
-position = 2;                            % start-goal set
+position = 1;                            % start-goal set
 
 grid_size = 1.0;                         % grid map size
 
 options_save = true;
-filename = ['atrio',position,'.mat'];
+filename = ['atrio',num2str(position),'.mat'];
 
 class_names = {'L', 'R', 'S'};
 
