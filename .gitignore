@@ -1,6 +1,5 @@
 *.pyc
 *.asv
-*.mat
 *.fig
 *.mexmaci64
 *.ilxc

@@ -69,7 +69,7 @@ if not(isempty(map_name))
     % Close file
     fclose(fid);
     
-    % Plot obstacle map
+    % DEBUG: plot obstacle map
     %{
     figure(120);
     fillFlag = true;
@@ -84,7 +84,7 @@ if not(isempty(map_name))
         end
     end
     %}
-    
+   
     % Shift map origin to (0,0)
     trasl_x = 0;
     trasl_y = 0;
@@ -185,7 +185,7 @@ inflate(map_res, inflation);
 
 % Get polygons of inflated map and set as obstacles
 poly_obstacles = map2poly(map_res, res);
-% DEBUG
+% DEBUG: plot polygons
 %{
 cellfun(@plot, poly_obstacles);
 axis([-1,20,-1,20]);

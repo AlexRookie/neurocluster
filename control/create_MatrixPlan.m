@@ -17,19 +17,23 @@ step        = 0.1;                       % sampling step (cm)
 window      = 12;                        % number of samples
 num_classes = 3;                         % number of classes
 generator = 'clothoids_PRM_montecarlo';  % path planner
+
 map = 'povo2Atrium';                     % map name
+position = 2;                            % start-goal set
 
 grid_size = 1.0;                         % grid map size
 
+options_save = true;
+filename = ['atrio',position,'.mat'];
+
+class_names = {'L', 'R', 'S'};
+
+% ---- Network parameters ----
 % network units: [5, 12]
 % latent neurons: 5
 % classes: 3
 % weights file: 'models/cross3_ae3'
-
-options.save = true;
-options.plot = true;
-
-class_names = {'L', 'R', 'S'};
+% ----------------------------
 
 %-------------------------------------------------------------------------%
 
@@ -42,9 +46,10 @@ addpath(genpath('../MATLAB_path_generation/functions/'));
 
 randomize    = true;
 augmentation = false;
-positions = [1, 6, 0.0, 10.8, 1, -pi/2];
+positions = [1, 6, 0.0, 10.8, 1, -pi/2;
+             1, 6, 0.0, 4.5, 11.5, -pi];
 
-[Map, Pos] = map_and_positions(map, positions);
+[Map, Pos] = map_and_positions(map, positions(position,:));
 clothoids = feval(generator, Map, Pos, num_traj, randomize);
 samples = get_samples(clothoids, step, augmentation);
 
@@ -187,7 +192,7 @@ hold on, box on, axis equal;
 plot(WallsPoly, 'FaceColor', [0.7,0.7,0.65], 'FaceAlpha', 1, 'EdgeColor', 'k');
 plot(Grid.poly(Grid.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
 for i = 1:numel(Grid.poly)
-    if Grid.stat(i) == 0
+    if Grid.theta(i) == 100
         continue;
     end
     quiver(Grid.cent(i,1), Grid.cent(i,2), 0.5*cos(Grid.theta(i)), 0.5*sin(Grid.theta(i)), 'color', 'b', 'linewidth', 2);
@@ -196,6 +201,9 @@ end
 MatrixPlan = Grid.stat;
 ThetaPlan  = Grid.theta;
 
-save('data/atrio1.mat', 'MatrixPlan','ThetaPlan','Grid','class_names','grid_size','conf_pred','Map','positions','clothoids','samples');
+if options_save==true
+    save(['data/',filename], 'MatrixPlan','ThetaPlan','Grid','conf_pred','clothoids','samples',...
+                             'Map','positions','position','class_names','grid_size');
+end
 
 clearvars i j l ans;
