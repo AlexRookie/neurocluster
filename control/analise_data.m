@@ -7,8 +7,12 @@ close all;
 clear all;
 clc;
 
-%file = 12;
+files = [1,2,3,4,5,6];
+%files = [7,8,9,10,11,12];
+
 map = 'povo2Atrium';
+
+linestyles = {'-', '--', '-.', ':', '-', '--'};
 
 %-------------------------------------------------------------------------%
 
@@ -17,8 +21,12 @@ addpath(genpath('./data/'));
 addpath(genpath('./functions/'));
 addpath(genpath('../MATLAB_path_generation/synthetic_path_generators/'));
 
-files = dir('data/log_files');
-files = files(~ismember({files.name},{'.','..'}));
+colors = customColors;
+
+dir_files = dir('data/log_files');
+dir_files = dir_files(~ismember({dir_files.name},{'.','..'}));
+
+load([dir_files(files(1)).folder,'/',dir_files(files(1)).name], '-mat', 'Grid', 'class_names');
 
 figure(1);
 dim = get(0, 'Screensize');
@@ -30,7 +38,15 @@ set(findall(gcf,'-property','FontSize'), 'FontSize', 22);
 xlabel('x (m)', 'interpreter', 'latex', 'fontsize', 28);
 ylabel('y (m)', 'interpreter', 'latex', 'fontsize', 28);
 
-h = plot_map(map, false);
+[h, trasl_x, trasl_y] = plot_map(map, false);
+
+%plot(Grid.poly(Grid.stat~=1), 'FaceColor', 'None', 'FaceAlpha', 0.1, 'EdgeColor', [0.75,0.75,0.75]);
+for k = 1:numel(Grid.poly)
+    if Grid.stat(k) == 0
+        continue;
+    end
+    text(Grid.cent(k,1)-trasl_x, Grid.cent(k,2)-trasl_y, class_names{Grid.stat(k)}, 'color', 'g', 'fontsize', 18); %, 'FontWeight', 'bold');
+end
 
 figure(2);
 dim = get(0, 'Screensize');
@@ -39,9 +55,9 @@ set(gcf, 'Color', [1 1 1]);
 hold on, box on, grid on;
 set(findall(gcf,'-property','FontSize'), 'FontSize', 22);
 xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 28);
-ylabel('% (m)', 'interpreter', 'latex', 'fontsize', 28);
+ylabel('', 'interpreter', 'latex', 'fontsize', 28);
 
-for i = 1:length(files)
+for i = files %1:length(dir_files)
     % Ship broken data
     if (i==6) || (i==10)
         continue;
@@ -50,7 +66,8 @@ for i = 1:length(files)
     % Get data
     
     % Load data
-    load([files(i).folder,'/',files(i).name], '-mat', 'out', 'Grid', 'positions', 'position', 'grid_size', 'class_names');
+    load([dir_files(i).folder,'/',dir_files(i).name], '-mat', 'out', 'Grid', 'grid_size', 'class_names');
+    % do not load: Map, positions, position, ThetaPlan
     
     % Time vector
     t = out.tout;
@@ -77,21 +94,18 @@ for i = 1:length(files)
     
     % Plot
     figure(1);
-    plot(pose(:,1), pose(:,2), 'linewidth', 2);
+    plot(pose(:,1), pose(:,2), 'color', colors{mod(i,10)+1}, 'linewidth', 2, 'linestyle', linestyles{mod(i,6)+1});
     %quiver(pose(:,1), pose(:,2), cos(pose(:,3)), sin(pose(:,3)));
-
-    %figure(2);
-    %plot(theta_control, 'linewidth', 2);
-    %plot(omega_control, 'linewidth', 2);
-    %legend({'theta','omega'});
     
-    % Export PDF    
-    %{
-    h = gcf;
-    set(h,'Units','Inches');
-    pos = get(h,'Position');
-    set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)]);
-    print(h,'filename','-dpdf','-r0');
-    %}
-    
+    figure(2);
+    plot(t, theta_control + omega_control, 'color', colors{mod(i,10)+1}, 'linewidth', 2, 'linestyle', linestyles{mod(i,6)+1});
 end
+
+% Export PDF
+%{
+h = gcf;
+set(h,'Units','Inches');
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)]);
+print(h,'filename','-dpdf','-r0');
+%}

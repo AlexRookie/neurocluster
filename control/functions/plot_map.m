@@ -1,4 +1,4 @@
-function h = plot_map(map_name, plot_qr)
+function [h, trasl_x, trasl_y] = plot_map(map_name, plot_qr)
 % Alessandro Antonucci @AlexRookie
 % University of Trento
 
@@ -55,11 +55,9 @@ if not(isempty(map_name))
     fclose(fid);
 end
 
+% Shift map origin to (0,0)
 trasl_x = 0;
 trasl_y = 0;
-
-% Shift map origin to (0,0)
-%{
 if x_lim(1) < 0
     trasl_x = abs(x_lim(1));
 elseif x_lim(1) > 0
@@ -71,12 +69,11 @@ elseif x_lim(1) > 0
     trasl_y = - abs(y_lim(1));
 end
 for i = 1:size(obstacles,1)
-    obstacles{i}(1,:) = obstacles{i}(1,:) + trasl_x;
-    obstacles{i}(2,:) = obstacles{i}(2,:) + trasl_y;
+    obstacles{i}(1,:) = obstacles{i}(1,:);
+    obstacles{i}(2,:) = obstacles{i}(2,:);
 end
 x_lim = x_lim + trasl_x;
 y_lim = y_lim + trasl_y;
-%}
 
 fillFlag = true;
 for i = 1:size(obstacles,1)
@@ -94,8 +91,8 @@ if strcmp(map_name, 'povo2Atrium') && (plot_qr == true)
     qr = jsondecode(r{1}).value;
     hold on;
     for i = 1:length(qr)
-        h(end+1) = plot(qr(i).x + trasl_x, qr(i).y + trasl_y, '*');
-        h(end+1) = text(qr(i).x + trasl_x, qr(i).y + trasl_y, num2str(qr(i).id));
+        h(end+1) = plot(qr(i).x, qr(i).y, '*');
+        h(end+1) = text(qr(i).x, qr(i).y, num2str(qr(i).id));
     end
 end
 
