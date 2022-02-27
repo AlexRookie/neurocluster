@@ -1,4 +1,4 @@
-function [Map, Pos] = map_and_positions(varargin) % map_and_positions(map_name, [positions], [i])
+xfunction [Map, Pos] = map_and_positions(varargin) % map_and_positions(map_name, [positions], [i])
 
 map_name = varargin{1};
 if (nargin >= 2)
@@ -14,7 +14,7 @@ else
 end
 
 res = 10;        % occupancy map resolution
-inflation = 0.3; % obstacles inflation (meters)
+inflation = 0.1; % obstacles inflation (meters)
 
 l_vec = 0.5; % orientation angle length (for plot)
 
