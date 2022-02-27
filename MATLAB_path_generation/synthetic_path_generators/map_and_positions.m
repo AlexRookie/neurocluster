@@ -1,4 +1,4 @@
-xfunction [Map, Pos] = map_and_positions(varargin) % map_and_positions(map_name, [positions], [i])
+function [Map, Pos] = map_and_positions(varargin) % map_and_positions(map_name, [positions], [i])
 
 map_name = varargin{1};
 if (nargin >= 2)
