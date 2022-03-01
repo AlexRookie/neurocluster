@@ -5,7 +5,7 @@
 *.ilxc
 
 
-control/data/log_files
+control/data/
 MATLAB_path_generation/__pycache__
 MATLAB_path_generation/c++
 MATLAB_path_generation/data
@@ -14,6 +14,7 @@ MATLAB_path_generation/datasets/thor*
 MATLAB_path_generation/datasets/povo*
 MATLAB_path_generation/models
 MATLAB_path_generation/results
+postprocessing/log_files
 /test
 
 # Cache

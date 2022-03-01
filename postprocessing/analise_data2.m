@@ -12,8 +12,8 @@ gear_ratio = 24;
 
 % files = [1,2,3,4,5,6];
 % files = [7,8,9,10,11,12];
-%files = [25,26,27];
-files = [24];
+files = [25,26,27];
+
 
 dim = get(0, 'Screensize');
 
@@ -23,14 +23,9 @@ linestyles = {'-', '--', '-.', ':', '-', '--'};
 
 %-------------------------------------------------------------------------%
 
-% Folder tree
-addpath(genpath('./data/'));
-addpath(genpath('./functions/'));
-addpath(genpath('../MATLAB_path_generation/synthetic_path_generators/'));
-
 colors = customColors;
 
-dir_files = dir('data/log_files/');
+dir_files = dir('log1/');
 dir_files = dir_files(~ismember({dir_files.name},{'.','..'}));
 
 load([dir_files(files(1)).folder,'/',dir_files(files(1)).name], '-mat', 'Grid', 'class_names');
@@ -40,11 +35,14 @@ for i = files %1:length(dir_files)
     set(gcf, 'Position', [0, 0, dim(3)*0.8, dim(4)]);
     set(gcf, 'Color', [1 1 1]);
     hold on, box on, axis equal, grid on;
-    ax_lims = [-5, 5, -1, 7.5];
+    ax_lims = [-3, 8, -4, 4];
     axis(ax_lims);
-    set(findall(gcf,'-property','FontSize'), 'FontSize', 22);
-    xlabel('x (m)', 'interpreter', 'latex', 'fontsize', 28);
-    ylabel('y (m)', 'interpreter', 'latex', 'fontsize', 28);
+    xticks(ax_lims(1):1:ax_lims(2))
+    yticks(ax_lims(3):1:ax_lims(4))
+    xtickangle(0)
+    set(findall(gcf,'-property','FontSize'), 'FontSize', 60);
+    xlabel('x (m)', 'interpreter', 'latex', 'fontsize', 70);
+    ylabel('y (m)', 'interpreter', 'latex', 'fontsize', 70);
     
     [h, trasl_x, trasl_y] = plot_map(map, false);
     
@@ -53,7 +51,7 @@ for i = files %1:length(dir_files)
         if Grid.stat(k) == 0 || ~(ax_lims(1)+trasl_x < mod(k,size(Grid.stat,1)) && ax_lims(2)+trasl_x > mod(k,size(Grid.stat,1))) || ~(ax_lims(3)+trasl_y < ceil(k/size(Grid.stat,1)) && ax_lims(4)+trasl_y > ceil(k/size(Grid.stat,1)))
             continue;
         end
-        text(Grid.cent(k,1)-trasl_x, Grid.cent(k,2)-trasl_y, class_names{Grid.stat(k)}, 'color', [205,221,255]./255, 'fontsize', 18); %, 'FontWeight', 'bold');
+        text(Grid.cent(k,1)-trasl_x, Grid.cent(k,2)-trasl_y, class_names{Grid.stat(k)}, 'color', [205,221,255]./255, 'fontsize', 40); %, 'FontWeight', 'bold');
     end
     
     figure(400+i+100);
@@ -61,19 +59,10 @@ for i = files %1:length(dir_files)
     set(gcf, 'Color', [1 1 1]);
     hold on, box on, grid on;
     ylim([-2.5,1.5])
-    set(findall(gcf,'-property','FontSize'), 'FontSize', 22);
-    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 28);
-    ylabel('torque (Nm)', 'interpreter', 'latex', 'fontsize', 28);
+    set(findall(gcf,'-property','FontSize'), 'FontSize', 80);
+    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 90);
+    ylabel('torque (Nm)', 'interpreter', 'latex', 'fontsize', 90);
 
-    figure(400+i+200);
-    set(gcf, 'Position', [0, 0, dim(3), dim(4)]);
-    set(gcf, 'Color', [1 1 1]);
-    hold on, box on, grid on;
-    ylim([0,1])
-    set(findall(gcf,'-property','FontSize'), 'FontSize', 22);
-    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 28);
-    ylabel('\sigma', 'interpreter', 'tex', 'fontsize', 28);
-    
     % Ship broken data
     if (i==6) || (i==10)
         continue;
@@ -110,11 +99,8 @@ for i = files %1:length(dir_files)
     
     % Plot
     figure(400+i);
-    plot(pose(:,1), pose(:,2), 'color', colors{mod(3,10)+1}, 'linewidth', 3, 'linestyle', linestyles{mod(0,6)+1});
+    plot(pose(:,1), pose(:,2), 'color', colors{mod(3,10)+1}, 'linewidth', 4, 'linestyle', linestyles{mod(0,6)+1});
     %quiver(pose(:,1), pose(:,2), cos(pose(:,3)), sin(pose(:,3)));
-    hg = [];
-    hg = plot_unicycle(hg, pose(10,1), pose(10,2), pose(10,3), 'k', 1.6);
-    
 
     % Export PDF
     set(gcf,'Units','Inches');
@@ -127,14 +113,11 @@ for i = files %1:length(dir_files)
                                      %[Left Bottom Right Top] spacing
     NewPos = [Tight(1) Tight(2)+0.07 1-Tight(1)-Tight(3) 1-Tight(2)-(Tight(4)+0.08)]; %New plot position [X Y W H]
     set(gca, 'Position', NewPos);
-    %print(gcf,strcat('figures/plotMap',num2str(i)),'-dpdf','-r0');
-    %saveas(gcf,strcat('figures/plotMap',num2str(i)));
+    print(gcf,strcat('figures/plotMap',num2str(i)),'-dpdf','-r0');
+    saveas(gcf,strcat('figures/plotMap',num2str(i)));
     
     figure(400+i+100);
-    %plot(t, (theta_control + omega_control)/1000*torque_constant*gear_ratio, 'color', colors{mod(0,10)+1}, 'linewidth', 3, 'linestyle', linestyles{mod(0,6)+1});
-    plot(t, (theta_control + omega_control)/1000*torque_constant*gear_ratio, 'color', colors{mod(i,10)+1}, 'linewidth', 3, 'linestyle', linestyles{mod(i,6)+1});
-    plot(t, (omega_control)/1000*torque_constant*gear_ratio, 'color', colors{mod(i,10)+2}, 'linewidth', 3, 'linestyle', linestyles{mod(i,6)+2});
-    plot(t, (theta_control)/1000*torque_constant*gear_ratio, 'color', colors{mod(i,10)+3}, 'linewidth', 3, 'linestyle', linestyles{mod(i,6)+3});
+    plot(t, (theta_control + omega_control)/1000*torque_constant*gear_ratio, 'color', colors{mod(0,10)+1}, 'linewidth', 4, 'linestyle', linestyles{mod(0,6)+1});
     
     % Export PDF
     set(gcf,'Units','Inches');
@@ -147,12 +130,6 @@ for i = files %1:length(dir_files)
     NewPos = [Tight(1) Tight(2) 1-Tight(1)-Tight(3) 1-Tight(2)-Tight(4)]; %New plot position [X Y W H]
     set(gca, 'Position', NewPos);
     
-    %print(gcf,strcat('figures/plotControl',num2str(i)),'-dpdf','-r0');
-    %saveas(gcf,strcat('figures/plotControl',num2str(i)));
-    
-    figure(400+i+200);
-    %plot(t, (theta_control + omega_control)/1000*torque_constant*gear_ratio, 'color', colors{mod(0,10)+1}, 'linewidth', 3, 'linestyle', linestyles{mod(0,6)+1});
-    plot(t, nn_conf(:,1), 'color', colors{mod(i,10)+4}, 'linewidth', 3, 'linestyle', linestyles{mod(i,6)+1});
-    plot(t, nn_conf(:,2), 'color', colors{mod(i,10)+5}, 'linewidth', 3, 'linestyle', linestyles{mod(i,6)+2});
-    plot(t, nn_conf(:,3), 'color', colors{mod(i,10)+6}, 'linewidth', 3, 'linestyle', linestyles{mod(i,6)+3});
+    print(gcf,strcat('figures/plotControl',num2str(i)),'-dpdf','-r0');
+    saveas(gcf,strcat('figures/plotControl',num2str(i)));
 end
