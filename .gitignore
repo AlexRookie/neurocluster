@@ -14,7 +14,8 @@ MATLAB_path_generation/datasets/thor*
 MATLAB_path_generation/datasets/povo*
 MATLAB_path_generation/models
 MATLAB_path_generation/results
-postprocessing/log_files
+postprocessing/figures/
+postprocessing/log_files/
 /test
 
 # Cache
@@ -32,3 +33,4 @@ control/traj_classifier.cpp
 control/traj_classifier_wrapper.cpp
 MATLAB_path_generation/cluster_control_prototype.slxc
 libraries/Clothoids/toolbox/SFB__path_fitter__SFB.mat
+matlab.mat

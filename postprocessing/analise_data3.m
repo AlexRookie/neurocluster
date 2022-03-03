@@ -74,9 +74,9 @@ for i = files %1:length(dir_files)
     else
         ylim([-2.5,1.5]);
     end
-    set(findall(gcf,'-property','FontSize'), 'FontSize', 80);
-    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 90);
-    ylabel('torque (Nm)', 'interpreter', 'latex', 'fontsize', 90);
+    set(findall(gcf,'-property','FontSize'), 'FontSize', 40);
+    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 40);
+    ylabel('$\tau$ (Nm)', 'interpreter', 'latex', 'fontsize', 40);
     
     figure(400+i+200);
     set(gcf, 'Position', [0, 0, dim(3), dim(4)]);
@@ -86,9 +86,9 @@ for i = files %1:length(dir_files)
         xlim([0, 35]);
     end
     ylim([0,1]);
-    set(findall(gcf,'-property','FontSize'), 'FontSize', 80);
-    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 90);
-    ylabel('\sigma', 'interpreter', 'tex', 'fontsize', 90);
+    set(findall(gcf,'-property','FontSize'), 'FontSize', 50);
+    xlabel('t (s)', 'interpreter', 'latex', 'fontsize', 50);
+    ylabel('\epsilon', 'interpreter', 'tex', 'fontsize', 50);
     
     % Ship broken data
     if (i==6) || (i==10)
