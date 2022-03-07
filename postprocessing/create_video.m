@@ -10,8 +10,7 @@ close all;
 torque_constant = 0.0369;
 gear_ratio = 24;
 
-%files = [23];
-files = [5]; %[3,4,5]; % [good, bad, so-so] behaviours for video
+files = [7]; %[3,4,5,7]:[good, bad, so-so, good] behaviours for video
 
 map = 'povo2Atrium';
 
@@ -32,8 +31,13 @@ linestyles = {'-', '--', '-.', ':', '-', '--'};
 past_samples = 20;
 
 % Target points for the homography
-points_top = [0    -2    -0.4  1.2  1.2  1.2  1.2  2.8  2.8  2.8;
-              5.6   0.8   1.6  0.8  2.4  4.0  5.6  1.6  3.2  4.8];
+if files <= 5
+    points_top = [0    -2    -0.4  1.2  1.2  1.2  1.2  2.8  2.8  2.8;
+                  5.6   0.8   1.6  0.8  2.4  4.0  5.6  1.6  3.2  4.8];  
+else
+    points_top = [4.6    5.2  6.0  4.4  4.4  2.8  2.8  1.2  1.2  -0.4;
+                  -0.1  -1.6  0.0  0.8  2.4  1.6  3.2  0.8  2.4   1.6];
+end
 
 %-------------------------------------------------------------------------%
 
@@ -76,6 +80,9 @@ for i = files
     elseif i == 5
         start = 1;
         stop = 701;
+    elseif i == 7
+        start = 241;
+        stop = 660;
     end
     
     %---------------------------------------------------------------------%
@@ -91,7 +98,11 @@ for i = files
     set(gcf, 'Position', [0, 0, dim(3)*0.75, dim(4)*0.75]);
     set(gcf, 'Color', [1 1 1]);
     hold on, box on, axis equal, grid on;
-    ax_lims = [-5, 5, -1, 7.5]; % [-3, 8, -4, 7];
+    if i <= 5
+        ax_lims = [-5, 5, -1, 7.5]; % [-3, 8, -4, 7];
+    else
+        ax_lims = [-5, 8, -5, 4]; % [-3, 8, -4, 7];
+    end
     axis(ax_lims);
     
     xticks(ax_lims(1):2:ax_lims(2));
@@ -191,7 +202,7 @@ for i = files
         close(save_video);
     end
     %---------------------------------------------------------------------%
-        
+    
     if saveVideo == true
         save_video = VideoWriter(['./figures/video_conf', num2str(i), '.mp4'], 'MPEG-4');
         save_video.FrameRate = 1/dt;
@@ -289,20 +300,24 @@ for i = files
     hold on;
     
     for it = start+past_samples:2:stop
-       t_now = t(it);
-       frame = find(abs(t_on_video-t_now)<1e-2,1);
-           
-       image = read(video,frame);
-       imshow(image);
-       hold on;
-       plot(pose_on_video(start:it,1), pose_on_video(start:it,2), 'Color', [colors{1}, 0.8], 'LineWidth', 4);
-       
-       if saveVideo == true
-           writeVideo(save_video, getframe(fig3));
-       else
-           drawnow;
-           pause(1/video.FrameRate);
-       end
+        t_now = t(it);
+        frame = find(abs(t_on_video-t_now)<1e-2,1);
+        
+        if isempty(frame)
+            continue;
+        end
+        
+        image = read(video,frame);
+        imshow(image);
+        hold on;
+        plot(pose_on_video(start:it,1), pose_on_video(start:it,2), 'Color', [colors{1}, 0.8], 'LineWidth', 4);
+        
+        if saveVideo == true
+            writeVideo(save_video, getframe(fig3));
+        else
+            drawnow;
+            pause(1/video.FrameRate);
+        end
     end
     
     if saveVideo == true
