@@ -4,8 +4,8 @@
 *.mexmaci64
 *.ilxc
 
-
 control/data/
+libraries/KerasCpp/
 MATLAB_path_generation/__pycache__
 MATLAB_path_generation/c++
 MATLAB_path_generation/data
@@ -16,6 +16,7 @@ MATLAB_path_generation/models
 MATLAB_path_generation/results
 postprocessing/figures/
 postprocessing/log_files/
+postprocessing/videos.nosync/
 /test
 
 # Cache

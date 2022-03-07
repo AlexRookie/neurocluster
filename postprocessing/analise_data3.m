@@ -19,8 +19,6 @@ dim = get(0, 'Screensize');
 
 map = 'povo2Atrium';
 
-linestyles = {'-', '--', '-.', ':', '-', '--'};
-
 %-------------------------------------------------------------------------%
 
 % Folder tree
@@ -29,7 +27,9 @@ addpath(genpath('./functions/'));
 addpath(genpath('../MATLAB_path_generation/synthetic_path_generators/'));
 
 colors = customColors;
+linestyles = {'-', '--', '-.', ':', '-', '--'};
 
+% Load data
 dir_files = dir('log_files/');
 dir_files = dir_files(~ismember({dir_files.name},{'.','..'}));
 
