@@ -16,7 +16,7 @@ MATLAB_path_generation/models
 MATLAB_path_generation/results
 postprocessing/figures/
 postprocessing/log_files/
-postprocessing/videos.nosync/
+postprocessing/log_videos.nosync/
 /test
 
 # Cache
