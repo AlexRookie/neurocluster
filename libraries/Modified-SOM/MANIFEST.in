@@ -1,1 +1,0 @@
-recursive-include detection/dataset *.csv
